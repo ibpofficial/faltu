@@ -3,16 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>QuickChat Room</title>
+    <title>Faltu Chat</title>
     
-    <!-- 1. Load Tailwind CSS (Styling) -->
+    <!-- 1. Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. Load React and ReactDOM -->
+    <!-- 2. Load React -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- 3. Load Babel (To understand the code in the browser) -->
+    <!-- 3. Load Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
     <!-- 4. Icons -->
@@ -21,215 +21,184 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
+        /* Smooth fade for typing indicator */
+        .fade-in { animation: fadeIn 0.3s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
 <body class="bg-slate-100 h-screen w-screen overflow-hidden">
 
     <div id="root"></div>
 
-    <!-- 5. The Application Code -->
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // ==========================================
-        // CONFIGURATION SECTION
+        // PASTE YOUR KEYS HERE
         // ==========================================
-        
-        // 1. FOR GITHUB / PUBLIC HOSTING:
-        // Replace the values below with your own keys from the Firebase Console.
-       const firebaseConfig = {
-  apiKey: "AIzaSyDYUW7qKEQzY5wznDhS9RXRqjTiVyWqacg",
-  authDomain: "chat-fixed.firebaseapp.com",
-  projectId: "chat-fixed",
-  storageBucket: "chat-fixed.firebasestorage.app",
-  messagingSenderId: "616897912392",
-  appId: "1:616897912392:web:bb6729b053d6e0d840827d"
-};
-
-        // 2. FOR THIS PREVIEW WINDOW ONLY:
-        // This block tries to load the environment's internal config so the app works 
-        // right now while you are testing it here.
-        try {
-            if (typeof __firebase_config !== 'undefined' && __firebase_config) {
-                firebaseConfig = JSON.parse(__firebase_config);
-            }
-        } catch (e) {
-            console.log("Running in manual mode (no internal config found)");
-        }
-        
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
+        let firebaseConfig = {
+            apiKey: "AIzaSyDYUW7qKEQzY5wznDhS9RXRqjTiVyWqacg",
+            authDomain: "chat-fixed.firebaseapp.com",
+            projectId: "chat-fixed",
+            storageBucket: "chat-fixed.firebasestorage.app",
+            messagingSenderId: "616897912392",
+            appId: "1:616897912392:web:bb6729b053d6e0d840827d"
+        };
         // ==========================================
 
         // Initialize Firebase
         let app, auth, db;
-        let configError = null;
-
         try {
-            // Check if config is still default placeholder
-            if (firebaseConfig.apiKey === "YOUR_API_KEY_HERE") {
-                throw new Error("Firebase not configured");
-            }
             app = initializeApp(firebaseConfig);
             auth = getAuth(app);
             db = getFirestore(app);
-        } catch (e) {
-            configError = e.message;
-        }
+        } catch (e) { console.error(e); }
 
         const { useState, useEffect, useRef } = React;
 
-        // --- Icon Component Wrappers ---
-        const Icon = ({ name, size = 24, className = "" }) => {
-            useEffect(() => {
-                if (window.lucide) window.lucide.createIcons();
-            }, [name]);
+        const Icon = ({ name, size = 20, className = "" }) => {
+            useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
             return <i data-lucide={name} width={size} height={size} className={className}></i>;
         };
 
         function App() {
+            // User & Chat State
             const [user, setUser] = useState(null);
             const [messages, setMessages] = useState([]);
             const [newMessage, setNewMessage] = useState('');
-            const [loading, setLoading] = useState(true);
-            const [error, setError] = useState(null);
             
+            // App UI State
             const [screen, setScreen] = useState('join');
             const [username, setUsername] = useState('');
             const [roomId, setRoomId] = useState('');
+            const [loading, setLoading] = useState(true);
+            
+            // New Features State
+            const [replyingTo, setReplyingTo] = useState(null);
+            const [typingUsers, setTypingUsers] = useState([]);
             
             const messagesEndRef = useRef(null);
+            const lastTypingUpdate = useRef(0);
 
+            // 1. Auth
             useEffect(() => {
-                // If we detected a config error earlier (e.g. still using placeholders), stop here.
-                if (configError) {
-                    setError("Firebase API Key is missing. Please open the code file and paste your Firebase Config keys where indicated.");
-                    setLoading(false);
-                    return;
-                }
-
                 const initAuth = async () => {
-                    try {
-                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                            await signInWithCustomToken(auth, __initial_auth_token);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (err) {
-                        console.error("Auth Error", err);
-                        setError("Could not sign in: " + err.message);
-                        setLoading(false);
+                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        await signInWithCustomToken(auth, __initial_auth_token);
+                    } else {
+                        await signInAnonymously(auth);
                     }
                 };
-                
                 initAuth();
-
-                const unsubscribe = onAuthStateChanged(auth, (u) => {
-                    setUser(u);
-                    if (u) setLoading(false);
-                });
-                return () => unsubscribe();
+                return onAuthStateChanged(auth, u => { setUser(u); setLoading(false); });
             }, []);
 
+            // 2. Chat Logic (Messages & Typing Listener)
             useEffect(() => {
-                if (!user || screen !== 'chat' || !roomId || !db) return;
+                if (!user || screen !== 'chat' || !roomId) return;
 
-                // RULE 1: Use strict public path
-                const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages');
-
-                const unsubscribe = onSnapshot(messagesRef, (snapshot) => {
+                // A. Message Listener
+                const unsubscribeMsg = onSnapshot(collection(db, 'chat_messages'), (snapshot) => {
                     const loadedMessages = snapshot.docs
                         .map(doc => ({ id: doc.id, ...doc.data() }))
-                        .filter(msg => msg.roomId === roomId) // Client-side filtering
+                        .filter(msg => msg.roomId === roomId)
                         .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-
                     setMessages(loadedMessages);
-                    setTimeout(() => { if(window.lucide) window.lucide.createIcons(); }, 100);
+                    setTimeout(() => window.lucide?.createIcons(), 100);
                 });
 
-                return () => unsubscribe();
+                // B. Typing Status Listener
+                const unsubscribeTyping = onSnapshot(collection(db, 'typing_status'), (snapshot) => {
+                    const now = Date.now();
+                    const activeTypers = snapshot.docs
+                        .map(doc => doc.data())
+                        .filter(d => d.roomId === roomId && d.uid !== user.uid) // Same room, not me
+                        .filter(d => now - d.timestamp < 3000) // Active in last 3 seconds
+                        .map(d => d.displayName);
+                    
+                    setTypingUsers(activeTypers);
+                });
+
+                return () => { unsubscribeMsg(); unsubscribeTyping(); };
             }, [user, screen, roomId]);
 
+            // Scroll to bottom
             useEffect(() => {
                 messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-                if(window.lucide) window.lucide.createIcons();
-            }, [messages, screen]);
+                window.lucide?.createIcons();
+            }, [messages, typingUsers, replyingTo]);
 
+            // 3. Typing Handler (Updates Database)
+            const handleTyping = async (e) => {
+                setNewMessage(e.target.value);
+                
+                // Only update database once every 2 seconds to save writes
+                if (Date.now() - lastTypingUpdate.current > 2000) {
+                    lastTypingUpdate.current = Date.now();
+                    try {
+                        await setDoc(doc(db, 'typing_status', user.uid), {
+                            uid: user.uid,
+                            displayName: username,
+                            roomId: roomId,
+                            timestamp: Date.now()
+                        });
+                    } catch (err) { console.error("Typing status error", err); }
+                }
+            };
+
+            // 4. Send Message Handler
             const handleSendMessage = async (e) => {
                 e.preventDefault();
-                if (!newMessage.trim() || !user) return;
+                if (!newMessage.trim()) return;
 
                 try {
-                    const messagesRef = collection(db, 'artifacts', appId, 'public', 'data', 'chat_messages');
-                    await addDoc(messagesRef, {
+                    await addDoc(collection(db, 'chat_messages'), {
                         text: newMessage,
                         uid: user.uid,
                         displayName: username,
                         roomId: roomId,
-                        createdAt: serverTimestamp()
+                        createdAt: serverTimestamp(),
+                        replyTo: replyingTo ? {
+                            id: replyingTo.id,
+                            displayName: replyingTo.displayName,
+                            text: replyingTo.text
+                        } : null
                     });
                     setNewMessage('');
+                    setReplyingTo(null); // Clear reply after sending
                 } catch (err) {
-                    console.error("Error sending", err);
-                    alert("Error sending message. Check console.");
+                    alert("Error sending message");
                 }
             };
 
-            const generateRoomId = () => {
-                setRoomId(Math.random().toString(36).substring(2, 8).toUpperCase());
-            };
-
-            const handleJoin = (e) => {
-                e.preventDefault();
-                if(username && roomId) setScreen('chat');
-            };
-
-            if (loading) return (
-                <div className="h-screen flex items-center justify-center bg-slate-50">
-                     <div className="text-blue-500 flex flex-col items-center gap-2">
-                        <span className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin"></span>
-                        Loading...
-                    </div>
-                </div>
-            );
-            
-            if (error) return (
-                <div className="h-screen flex flex-col items-center justify-center bg-red-50 p-6 text-center">
-                    <div className="bg-white p-6 rounded-xl shadow-lg max-w-md">
-                        <h3 className="text-red-600 font-bold text-lg mb-2">Configuration Error</h3>
-                        <p className="text-gray-600 mb-4">{error}</p>
-                        <p className="text-xs text-gray-400">If you are the developer, edit the index.html file and update the firebaseConfig object.</p>
-                    </div>
-                </div>
-            );
+            if (loading) return <div className="h-screen flex items-center justify-center text-blue-500">Loading Faltu...</div>;
 
             // --- JOIN SCREEN ---
             if (screen === 'join') {
                 return (
-                    <div className="flex flex-col h-screen bg-gradient-to-br from-blue-500 to-purple-600 items-center justify-center p-4">
+                    <div className="flex flex-col h-screen bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center p-4">
                         <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
                             <div className="text-center mb-8">
-                                <h1 className="text-2xl font-bold text-gray-800">QuickChat</h1>
-                                <p className="text-gray-500 text-sm">Real-time secure messaging</p>
+                                <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">Faltu</h1>
+                                <p className="text-gray-500 text-sm">Chat Freely, No Limits.</p>
                             </div>
-                            <form onSubmit={handleJoin} className="space-y-4">
+                            <form onSubmit={(e) => { e.preventDefault(); if(username && roomId) setScreen('chat'); }} className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
                                     <input type="text" required value={username} onChange={e => setUsername(e.target.value)}
-                                        className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="e.g. Alex" />
+                                        className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Rocky" />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Room ID</label>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Room Code</label>
                                     <div className="flex gap-2">
                                         <input type="text" required value={roomId} onChange={e => setRoomId(e.target.value)}
-                                            className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="e.g. ROOM1" />
-                                        <button type="button" onClick={generateRoomId} className="px-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold transition-colors">RND</button>
+                                            className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. CHAI_POINT" />
+                                        <button type="button" onClick={() => setRoomId(Math.random().toString(36).substring(2, 7).toUpperCase())} className="px-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold transition-colors">RND</button>
                                     </div>
-                                    <p className="text-xs text-gray-400 mt-1">Share this ID with friends to chat.</p>
                                 </div>
-                                <button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-xl font-bold shadow-lg mt-4 transition-all transform active:scale-95">Enter Room</button>
+                                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-lg mt-4 transition-transform active:scale-95">Enter Chat</button>
                             </form>
                         </div>
                     </div>
@@ -238,48 +207,101 @@
 
             // --- CHAT SCREEN ---
             return (
-                <div className="flex flex-col h-screen bg-slate-100 font-sans max-w-md mx-auto shadow-2xl relative">
-                    <header className="bg-white p-4 flex items-center justify-between shadow-sm z-10 border-b">
-                        <div>
-                            <h2 className="font-bold text-gray-800">Room: {roomId}</h2>
-                            <span className="text-xs text-green-600 flex items-center gap-1">
-                                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></span>
-                                Online
-                            </span>
+                <div className="flex flex-col h-screen bg-[#e5ddd5] font-sans max-w-md mx-auto shadow-2xl relative">
+                    {/* Header */}
+                    <header className="bg-indigo-600 p-4 text-white flex items-center justify-between shadow-md z-10">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
+                                {roomId.charAt(0)}
+                            </div>
+                            <div>
+                                <h2 className="font-bold leading-tight">{roomId}</h2>
+                                <p className="text-xs text-indigo-100 opacity-80">{username}</p>
+                            </div>
                         </div>
                         <div className="flex gap-2">
-                            <button onClick={() => navigator.clipboard.writeText(roomId)} className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-full transition-all" title="Copy Room ID"><Icon name="copy" size={20}/></button>
-                            <button onClick={() => {setScreen('join'); setMessages([]);}} className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-all" title="Leave"><Icon name="log-out" size={20}/></button>
+                            <button onClick={() => navigator.clipboard.writeText(roomId)} className="p-2 hover:bg-white/10 rounded-full"><Icon name="copy" /></button>
+                            <button onClick={() => setScreen('join')} className="p-2 hover:bg-white/10 rounded-full"><Icon name="log-out" /></button>
                         </div>
                     </header>
 
-                    <main className="flex-1 overflow-y-auto p-4 space-y-2 bg-slate-50">
-                        {messages.length === 0 && (
-                            <div className="h-full flex flex-col items-center justify-center text-slate-400 space-y-2 opacity-60">
-                                <Icon name="message-square" size={48} />
-                                <p className="text-sm font-medium">No messages yet</p>
-                            </div>
-                        )}
+                    {/* Messages Area */}
+                    <main className="flex-1 overflow-y-auto p-4 space-y-2 relative" style={{backgroundImage: 'linear-gradient(#e5ddd5 2px, transparent 2px), linear-gradient(90deg, #e5ddd5 2px, transparent 2px)', backgroundSize: '20px 20px', backgroundPosition: '-2px -2px'}}>
                         {messages.map((msg, i) => {
                             const isMe = msg.uid === user.uid;
                             const showHeader = i === 0 || messages[i - 1].uid !== msg.uid;
+                            
                             return (
                                 <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${showHeader ? 'mt-4' : 'mt-1'}`}>
-                                    {showHeader && !isMe && <span className="text-[11px] text-slate-500 ml-3 mb-1 font-medium">{msg.displayName}</span>}
-                                    <div className={`px-4 py-2 text-sm shadow-sm max-w-[85%] break-words ${isMe ? 'bg-blue-600 text-white rounded-2xl rounded-tr-sm' : 'bg-white text-slate-800 rounded-2xl rounded-tl-sm border border-gray-100'}`}>
-                                        {msg.text}
+                                    {/* Name tag */}
+                                    {showHeader && !isMe && <span className="text-[11px] text-gray-500 ml-2 mb-1 font-bold">{msg.displayName}</span>}
+                                    
+                                    <div className={`group relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm ${isMe ? 'bg-indigo-500 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none'}`}>
+                                        
+                                        {/* Reply Preview inside message */}
+                                        {msg.replyTo && (
+                                            <div className={`mb-2 rounded-lg p-2 text-xs border-l-4 ${isMe ? 'bg-indigo-600 border-indigo-300 text-indigo-100' : 'bg-gray-100 border-indigo-500 text-gray-600'}`}>
+                                                <p className="font-bold mb-0.5">{msg.replyTo.displayName}</p>
+                                                <p className="truncate opacity-80">{msg.replyTo.text}</p>
+                                            </div>
+                                        )}
+                                        
+                                        <p className="leading-relaxed break-words">{msg.text}</p>
+                                        
+                                        {/* Reply Button (Appears on Hover/Tap) */}
+                                        <button 
+                                            onClick={() => setReplyingTo(msg)}
+                                            className={`absolute top-0 bottom-0 ${isMe ? '-left-8' : '-right-8'} p-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity`}
+                                        >
+                                            <Icon name="reply" size={16} />
+                                        </button>
                                     </div>
                                 </div>
                             );
                         })}
+                        
+                        {/* Typing Indicator Bubble */}
+                        {typingUsers.length > 0 && (
+                            <div className="fade-in mt-2 ml-2 flex items-center gap-2 bg-white/80 p-2 rounded-full w-fit shadow-sm">
+                                <div className="flex gap-1">
+                                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></span>
+                                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></span>
+                                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
+                                </div>
+                                <span className="text-xs text-gray-500 font-medium">
+                                    {typingUsers.join(", ")} is typing...
+                                </span>
+                            </div>
+                        )}
                         <div ref={messagesEndRef} />
                     </main>
 
-                    <footer className="bg-white p-3 border-t pb-safe">
-                        <form onSubmit={handleSendMessage} className="flex gap-2 items-center">
-                            <input type="text" value={newMessage} onChange={e => setNewMessage(e.target.value)}
-                                className="flex-1 bg-slate-100 text-slate-800 rounded-full px-5 py-3 outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all text-sm" placeholder="Type a message..." />
-                            <button disabled={!newMessage.trim()} className="bg-blue-600 text-white p-3 rounded-full shadow-lg hover:bg-blue-700 disabled:opacity-50 disabled:hover:bg-blue-600 transition-all transform active:scale-95"><Icon name="send" size={20}/></button>
+                    {/* Reply Preview Bar */}
+                    {replyingTo && (
+                        <div className="bg-gray-100 p-2 border-l-4 border-indigo-500 flex justify-between items-center mx-2 mt-2 rounded-r-lg animate-in slide-in-from-bottom-2">
+                            <div className="overflow-hidden">
+                                <p className="text-xs font-bold text-indigo-600">Replying to {replyingTo.displayName}</p>
+                                <p className="text-xs text-gray-500 truncate">{replyingTo.text}</p>
+                            </div>
+                            <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-gray-200 rounded-full">
+                                <Icon name="x" size={16} className="text-gray-500" />
+                            </button>
+                        </div>
+                    )}
+
+                    {/* Input Area */}
+                    <footer className="bg-gray-100 p-2 pb-safe">
+                        <form onSubmit={handleSendMessage} className="flex items-end gap-2 bg-white p-2 rounded-3xl shadow-sm border border-gray-200">
+                            <input
+                                type="text"
+                                value={newMessage}
+                                onChange={handleTyping}
+                                placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
+                                className="flex-1 max-h-32 bg-transparent border-none focus:ring-0 text-sm px-3 py-2 resize-none outline-none"
+                            />
+                            <button disabled={!newMessage.trim()} className="bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-md">
+                                <Icon name="send" size={18} />
+                            </button>
                         </form>
                     </footer>
                 </div>
