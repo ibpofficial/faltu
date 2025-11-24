@@ -2,41 +2,64 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Faltu Chat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Faltu Chat Ultimate</title>
     
-    <!-- 1. Load Tailwind CSS -->
+    <!-- 1. Google Fonts (Inter) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- 2. Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- 2. Load React -->
+    <!-- 3. React Framework -->
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     
-    <!-- 3. Load Babel -->
+    <!-- 4. Babel -->
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-    <!-- 4. Icons -->
+    <!-- 5. Icons -->
     <script src="https://unpkg.com/lucide@latest"></script>
 
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        slate: { 850: '#151e32', 950: '#020617' }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom); }
-        /* Smooth fade for typing indicator */
         .fade-in { animation: fadeIn 0.3s ease-in; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
-<body class="bg-slate-100 h-screen w-screen overflow-hidden">
+<body class="bg-slate-950 h-screen w-screen overflow-hidden text-slate-100 selection:bg-indigo-500/30">
 
     <div id="root"></div>
 
     <script type="text/babel" data-type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-app.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, serverTimestamp, doc, setDoc, deleteDoc, query, where, getDocs, writeBatch, limit, orderBy } from "https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore.js";
 
         // ==========================================
-        // PASTE YOUR KEYS HERE
+        // CONFIGURATION
         // ==========================================
         let firebaseConfig = {
             apiKey: "AIzaSyDYUW7qKEQzY5wznDhS9RXRqjTiVyWqacg",
@@ -46,17 +69,28 @@
             messagingSenderId: "616897912392",
             appId: "1:616897912392:web:bb6729b053d6e0d840827d"
         };
-        // ==========================================
 
-        // Initialize Firebase
-        let app, auth, db;
-        try {
-            app = initializeApp(firebaseConfig);
-            auth = getAuth(app);
-            db = getFirestore(app);
-        } catch (e) { console.error(e); }
+        try { if (typeof __firebase_config !== 'undefined' && __firebase_config) firebaseConfig = JSON.parse(__firebase_config); } catch (e) {}
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
 
         const { useState, useEffect, useRef } = React;
+
+        // --- Utils ---
+        const getAvatarColor = (name) => {
+            const colors = ['bg-rose-500', 'bg-orange-500', 'bg-emerald-500', 'bg-sky-500', 'bg-indigo-500', 'bg-violet-500', 'bg-pink-500'];
+            let hash = 0;
+            for (let i = 0; i < name.length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+            return colors[Math.abs(hash) % colors.length];
+        };
+
+        const Linkify = ({ text }) => {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const parts = text.split(urlRegex);
+            return (<span>{parts.map((part, i) => part.match(urlRegex) ? <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-indigo-300 font-medium hover:underline break-all">{part}</a> : part)}</span>);
+        };
 
         const Icon = ({ name, size = 20, className = "" }) => {
             useEffect(() => { if (window.lucide) window.lucide.createIcons(); }, [name]);
@@ -64,244 +98,352 @@
         };
 
         function App() {
-            // User & Chat State
+            // Core
             const [user, setUser] = useState(null);
-            const [messages, setMessages] = useState([]);
-            const [newMessage, setNewMessage] = useState('');
+            const [screen, setScreen] = useState('home'); 
             
-            // App UI State
-            const [screen, setScreen] = useState('join');
-            const [username, setUsername] = useState('');
+            // Data
+            const [username, setUsername] = useState(localStorage.getItem('faltu_username') || '');
             const [roomId, setRoomId] = useState('');
-            const [loading, setLoading] = useState(true);
+            const [savedRooms, setSavedRooms] = useState(() => JSON.parse(localStorage.getItem('faltu_saved_rooms') || '[]'));
+            const [messages, setMessages] = useState([]);
             
-            // New Features State
+            // UI & Features
+            const [newMessage, setNewMessage] = useState('');
             const [replyingTo, setReplyingTo] = useState(null);
             const [typingUsers, setTypingUsers] = useState([]);
+            const [onlineUsers, setOnlineUsers] = useState([]);
+            const [showUserList, setShowUserList] = useState(false);
+            const [permission, setPermission] = useState(Notification.permission);
             
             const messagesEndRef = useRef(null);
             const lastTypingUpdate = useRef(0);
+            const popSound = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3'));
+            const notifySound = useRef(new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3'));
 
-            // 1. Auth
+            // 1. Auth & Setup
             useEffect(() => {
                 const initAuth = async () => {
-                    if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
-                        await signInWithCustomToken(auth, __initial_auth_token);
-                    } else {
-                        await signInAnonymously(auth);
-                    }
+                    try {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) await signInWithCustomToken(auth, __initial_auth_token);
+                        else await signInAnonymously(auth);
+                    } catch (e) { await signInAnonymously(auth); }
                 };
                 initAuth();
-                return onAuthStateChanged(auth, u => { setUser(u); setLoading(false); });
+                if (Notification.permission === 'default') Notification.requestPermission().then(p => setPermission(p));
+                return onAuthStateChanged(auth, u => setUser(u));
             }, []);
 
-            // 2. Chat Logic (Messages & Typing Listener)
+            // 2. Background Notifications
+            useEffect(() => {
+                if (!user || savedRooms.length === 0) return;
+                const unsubscribes = [];
+                savedRooms.forEach(room => {
+                    if (screen === 'chat' && roomId === room.id) return;
+                    const q = query(collection(db, 'chat_messages'), where('roomId', '==', room.id), orderBy('createdAt', 'desc'), limit(1));
+                    unsubscribes.push(onSnapshot(q, (snapshot) => {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === "added") {
+                                const data = change.doc.data();
+                                if (data.createdAt && (Date.now() - data.createdAt.toMillis() < 10000) && data.uid !== user.uid) {
+                                    sendNotification(room.id, data.displayName, data.text);
+                                }
+                            }
+                        });
+                    }));
+                });
+                return () => unsubscribes.forEach(u => u());
+            }, [savedRooms, user, screen, roomId]);
+
+            const sendNotification = (roomName, sender, text) => {
+                notifySound.current.play().catch(e=>{});
+                if (Notification.permission === "granted") {
+                    const notif = new Notification(`New message in ${roomName}`, { body: `${sender}: ${text}` });
+                    notif.onclick = () => { window.focus(); };
+                }
+            };
+
+            // 3. LocalStorage
+            useEffect(() => {
+                localStorage.setItem('faltu_username', username);
+                localStorage.setItem('faltu_saved_rooms', JSON.stringify(savedRooms));
+            }, [username, savedRooms]);
+
+            // 4. Chat Logic
             useEffect(() => {
                 if (!user || screen !== 'chat' || !roomId) return;
 
-                // A. Message Listener
-                const unsubscribeMsg = onSnapshot(collection(db, 'chat_messages'), (snapshot) => {
-                    const loadedMessages = snapshot.docs
-                        .map(doc => ({ id: doc.id, ...doc.data() }))
-                        .filter(msg => msg.roomId === roomId)
-                        .sort((a, b) => (a.createdAt?.seconds || 0) - (b.createdAt?.seconds || 0));
-                    setMessages(loadedMessages);
+                // Cleanup Old
+                const cleanup = async () => {
+                    try {
+                        const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+                        const q = query(collection(db, 'chat_messages'), where('roomId', '==', roomId));
+                        const snap = await getDocs(q);
+                        const batch = writeBatch(db);
+                        let c = 0;
+                        snap.docs.forEach(d => { if(d.data().createdAt?.toMillis() < cutoff) { batch.delete(d.ref); c++; }});
+                        if(c>0) batch.commit();
+                    } catch(e){}
+                };
+                cleanup();
+
+                // Messages
+                const unsubMsg = onSnapshot(collection(db, 'chat_messages'), (snap) => {
+                    let play = false;
+                    snap.docChanges().forEach(c => {
+                        if(c.type === 'added' && c.doc.data().roomId === roomId && c.doc.data().uid !== user.uid) play = true;
+                    });
+                    if(play && messages.length > 0 && !document.hidden) popSound.current.play().catch(()=>{});
+                    const msgs = snap.docs.map(d=>({id:d.id, ...d.data()})).filter(m=>m.roomId===roomId).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+                    setMessages(msgs);
                     setTimeout(() => window.lucide?.createIcons(), 100);
                 });
 
-                // B. Typing Status Listener
-                const unsubscribeTyping = onSnapshot(collection(db, 'typing_status'), (snapshot) => {
-                    const now = Date.now();
-                    const activeTypers = snapshot.docs
-                        .map(doc => doc.data())
-                        .filter(d => d.roomId === roomId && d.uid !== user.uid) // Same room, not me
-                        .filter(d => now - d.timestamp < 3000) // Active in last 3 seconds
-                        .map(d => d.displayName);
-                    
-                    setTypingUsers(activeTypers);
+                // Presence
+                const updatePres = () => setDoc(doc(db, 'room_users', `${roomId}_${user.uid}`), { uid:user.uid, displayName:username, roomId, lastSeen:serverTimestamp() }).catch(()=>{});
+                updatePres();
+                const intPres = setInterval(updatePres, 60000);
+                const unsubPres = onSnapshot(collection(db, 'room_users'), (s) => {
+                    const active = s.docs.map(d=>d.data()).filter(d=>d.roomId===roomId && d.lastSeen && (Date.now()-d.lastSeen.toMillis()<120000));
+                    setOnlineUsers(active);
                 });
 
-                return () => { unsubscribeMsg(); unsubscribeTyping(); };
+                // Typing
+                const unsubType = onSnapshot(collection(db, 'typing_status'), (s) => {
+                    const t = s.docs.map(d=>d.data()).filter(d=>d.roomId===roomId && d.uid!==user.uid && (Date.now()-d.timestamp<3000)).map(d=>d.displayName);
+                    setTypingUsers(t);
+                });
+
+                return () => { unsubMsg(); unsubPres(); unsubType(); clearInterval(intPres); };
             }, [user, screen, roomId]);
 
-            // Scroll to bottom
-            useEffect(() => {
-                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-                window.lucide?.createIcons();
-            }, [messages, typingUsers, replyingTo]);
+            useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages, typingUsers, replyingTo]);
 
-            // 3. Typing Handler (Updates Database)
-            const handleTyping = async (e) => {
-                setNewMessage(e.target.value);
-                
-                // Only update database once every 2 seconds to save writes
-                if (Date.now() - lastTypingUpdate.current > 2000) {
-                    lastTypingUpdate.current = Date.now();
-                    try {
-                        await setDoc(doc(db, 'typing_status', user.uid), {
-                            uid: user.uid,
-                            displayName: username,
-                            roomId: roomId,
-                            timestamp: Date.now()
-                        });
-                    } catch (err) { console.error("Typing status error", err); }
-                }
+            // --- Handlers ---
+            const handleJoin = (targetRoomId) => {
+                if(!username) { alert("Please set a username first!"); return; }
+                const rId = targetRoomId || roomId;
+                if(!rId) return;
+                setRoomId(rId);
+                setScreen('chat');
             };
 
-            // 4. Send Message Handler
+            const toggleSaveRoom = () => {
+                const exists = savedRooms.find(r => r.id === roomId);
+                if (exists) setSavedRooms(savedRooms.filter(r => r.id !== roomId));
+                else setSavedRooms([...savedRooms, { id: roomId, name: roomId }]);
+            };
+
+            const deleteSavedRoom = (e, id) => {
+                e.stopPropagation();
+                if(confirm("Forget this room?")) setSavedRooms(savedRooms.filter(r => r.id !== id));
+            };
+
             const handleSendMessage = async (e) => {
                 e.preventDefault();
                 if (!newMessage.trim()) return;
-
                 try {
                     await addDoc(collection(db, 'chat_messages'), {
-                        text: newMessage,
-                        uid: user.uid,
-                        displayName: username,
-                        roomId: roomId,
-                        createdAt: serverTimestamp(),
-                        replyTo: replyingTo ? {
-                            id: replyingTo.id,
-                            displayName: replyingTo.displayName,
-                            text: replyingTo.text
-                        } : null
+                        text: newMessage, uid: user.uid, displayName: username, roomId, createdAt: serverTimestamp(),
+                        replyTo: replyingTo ? { id: replyingTo.id, displayName: replyingTo.displayName, text: replyingTo.text } : null
                     });
-                    setNewMessage('');
-                    setReplyingTo(null); // Clear reply after sending
-                } catch (err) {
-                    alert("Error sending message");
+                    setNewMessage(''); setReplyingTo(null);
+                    setDoc(doc(db, 'room_users', `${roomId}_${user.uid}`), { uid:user.uid, displayName:username, roomId, lastSeen:serverTimestamp() });
+                } catch (err) {}
+            };
+
+            const handleDelete = async (msgId) => {
+                if(confirm("Delete this message permanently?")) await deleteDoc(doc(db, 'chat_messages', msgId));
+            };
+
+            const handleTyping = (e) => {
+                setNewMessage(e.target.value);
+                if (Date.now() - lastTypingUpdate.current > 2000) {
+                    lastTypingUpdate.current = Date.now();
+                    setDoc(doc(db, 'typing_status', user.uid), { uid: user.uid, displayName: username, roomId, timestamp: Date.now() }).catch(()=>{});
                 }
             };
 
-            if (loading) return <div className="h-screen flex items-center justify-center text-blue-500">Loading Faltu...</div>;
+            const requestNotif = () => Notification.requestPermission().then(p => setPermission(p));
 
-            // --- JOIN SCREEN ---
-            if (screen === 'join') {
+            // --- RENDER ---
+
+            // 1. HOME
+            if (screen === 'home') {
                 return (
-                    <div className="flex flex-col h-screen bg-gradient-to-br from-indigo-500 to-purple-600 items-center justify-center p-4">
-                        <div className="bg-white p-8 rounded-2xl shadow-2xl w-full max-w-md">
-                            <div className="text-center mb-8">
-                                <h1 className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600 mb-2">Faltu</h1>
-                                <p className="text-gray-500 text-sm">Chat Freely, No Limits.</p>
+                    <div className="flex flex-col h-screen bg-slate-950 p-6 relative overflow-hidden">
+                        <div className="max-w-md mx-auto w-full flex-1 flex flex-col z-10">
+                            <div className="mt-10 mb-8">
+                                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400 tracking-tight">Faltu</h1>
+                                <p className="text-slate-500 text-xs font-bold tracking-[0.2em] uppercase mt-1">Encrypted • Fast • Free</p>
                             </div>
-                            <form onSubmit={(e) => { e.preventDefault(); if(username && roomId) setScreen('chat'); }} className="space-y-4">
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name</label>
-                                    <input type="text" required value={username} onChange={e => setUsername(e.target.value)}
-                                        className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. Rocky" />
+
+                            <div className="bg-slate-900/80 p-5 rounded-3xl border border-slate-800/50 mb-6 shadow-xl backdrop-blur-sm">
+                                <label className="text-xs text-indigo-400 font-bold uppercase mb-3 block tracking-wide">Your Identity</label>
+                                <div className="flex gap-2">
+                                    <input type="text" value={username} onChange={e => setUsername(e.target.value)} placeholder="Enter Username"
+                                        className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl px-5 py-3.5 outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500/50 transition-all text-base" />
+                                    {permission !== 'granted' && (
+                                        <button onClick={requestNotif} className="bg-slate-800 p-3.5 rounded-2xl text-slate-400 hover:text-white hover:bg-slate-700 transition-colors" title="Enable Notifications">
+                                            <Icon name="bell-off" />
+                                        </button>
+                                    )}
                                 </div>
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-1">Room Code</label>
-                                    <div className="flex gap-2">
-                                        <input type="text" required value={roomId} onChange={e => setRoomId(e.target.value)}
-                                            className="w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="e.g. CHAI_POINT" />
-                                        <button type="button" onClick={() => setRoomId(Math.random().toString(36).substring(2, 7).toUpperCase())} className="px-3 bg-gray-100 hover:bg-gray-200 rounded-xl text-xs font-bold transition-colors">RND</button>
+                            </div>
+
+                            <h2 className="text-xs font-bold text-slate-500 mb-4 flex items-center gap-2 uppercase tracking-wide px-1">
+                                <Icon name="star" size={14} className="text-amber-400" /> Saved Groups
+                            </h2>
+                            
+                            <div className="flex-1 overflow-y-auto space-y-3 mb-6 pr-1 custom-scroll">
+                                {savedRooms.length === 0 ? (
+                                    <div className="text-center py-12 border-2 border-dashed border-slate-800/50 rounded-3xl text-slate-600 bg-slate-900/20">
+                                        <Icon name="messages-square" size={32} className="mx-auto mb-3 opacity-50" />
+                                        <p className="font-medium">No saved groups yet.</p>
+                                        <p className="text-xs mt-1 opacity-70">Join a room and click ⭐ to save.</p>
                                     </div>
-                                </div>
-                                <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-xl font-bold shadow-lg mt-4 transition-transform active:scale-95">Enter Chat</button>
-                            </form>
+                                ) : (
+                                    savedRooms.map(r => (
+                                        <div key={r.id} onClick={() => handleJoin(r.id)} 
+                                            className="bg-slate-900 p-4 rounded-2xl flex items-center justify-between cursor-pointer hover:bg-slate-800 hover:shadow-lg hover:shadow-indigo-500/10 border border-slate-800 hover:border-indigo-500/30 transition-all group">
+                                            <div className="flex items-center gap-4">
+                                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-bold text-xl text-white shadow-lg ${getAvatarColor(r.id)}`}>{r.id.charAt(0)}</div>
+                                                <div>
+                                                    <h3 className="font-bold text-slate-100 text-lg">{r.name}</h3>
+                                                    <p className="text-xs text-slate-500 font-medium group-hover:text-indigo-400 transition-colors">Tap to enter</p>
+                                                </div>
+                                            </div>
+                                            <button onClick={(e) => deleteSavedRoom(e, r.id)} className="p-3 text-slate-600 hover:text-red-400 hover:bg-red-500/10 rounded-xl transition-all">
+                                                <Icon name="trash-2" size={18} />
+                                            </button>
+                                        </div>
+                                    ))
+                                )}
+                            </div>
+
+                            <div className="mt-auto">
+                                <button onClick={() => setScreen('join')} className="w-full py-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-2xl shadow-xl shadow-indigo-600/20 active:scale-95 transition-all flex items-center justify-center gap-2 text-lg">
+                                    <Icon name="plus-circle" /> Join New Room
+                                </button>
+                            </div>
                         </div>
                     </div>
                 );
             }
 
-            // --- CHAT SCREEN ---
-            return (
-                <div className="flex flex-col h-screen bg-[#e5ddd5] font-sans max-w-md mx-auto shadow-2xl relative">
-                    {/* Header */}
-                    <header className="bg-indigo-600 p-4 text-white flex items-center justify-between shadow-md z-10">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center font-bold text-lg">
-                                {roomId.charAt(0)}
+            // 2. JOIN
+            if (screen === 'join') {
+                return (
+                    <div className="flex flex-col h-screen bg-slate-950 items-center justify-center p-6">
+                        <div className="w-full max-w-md bg-slate-900 p-8 rounded-[32px] border border-slate-800 shadow-2xl">
+                            <button onClick={() => setScreen('home')} className="mb-8 text-slate-400 hover:text-white flex items-center gap-2 text-sm font-medium transition-colors"><Icon name="arrow-left" size={16} /> Back to Home</button>
+                            <h2 className="text-3xl font-bold mb-8 text-white">Enter Room Code</h2>
+                            <div className="flex gap-3 mb-8">
+                                <input type="text" value={roomId} onChange={e => setRoomId(e.target.value)} placeholder="Ex: CHAI_POINT"
+                                    className="flex-1 bg-slate-950 border border-slate-700 rounded-2xl px-5 py-4 outline-none focus:border-indigo-500 text-lg transition-all" />
+                                <button onClick={() => setRoomId(Math.random().toString(36).substring(2, 7).toUpperCase())} className="px-5 bg-slate-800 hover:bg-slate-700 rounded-2xl font-bold text-indigo-400 border border-slate-700 transition-colors">RND</button>
                             </div>
-                            <div>
-                                <h2 className="font-bold leading-tight">{roomId}</h2>
-                                <p className="text-xs text-indigo-100 opacity-80">{username}</p>
-                            </div>
+                            <button onClick={() => handleJoin()} className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 py-4 rounded-2xl font-bold text-white text-lg shadow-lg hover:shadow-indigo-500/25 transition-all">Enter Chat</button>
                         </div>
-                        <div className="flex gap-2">
-                            <button onClick={() => navigator.clipboard.writeText(roomId)} className="p-2 hover:bg-white/10 rounded-full"><Icon name="copy" /></button>
-                            <button onClick={() => setScreen('join')} className="p-2 hover:bg-white/10 rounded-full"><Icon name="log-out" /></button>
-                        </div>
-                    </header>
+                    </div>
+                );
+            }
 
-                    {/* Messages Area */}
-                    <main className="flex-1 overflow-y-auto p-4 space-y-2 relative" style={{backgroundImage: 'linear-gradient(#e5ddd5 2px, transparent 2px), linear-gradient(90deg, #e5ddd5 2px, transparent 2px)', backgroundSize: '20px 20px', backgroundPosition: '-2px -2px'}}>
+            // 3. CHAT
+            const isSaved = savedRooms.some(r => r.id === roomId);
+            return (
+                <div className="flex flex-col h-screen bg-slate-950 font-sans max-w-md mx-auto shadow-2xl relative border-x border-slate-800/50">
+                    {/* Header */}
+                    <header className="bg-slate-900/90 backdrop-blur-md p-4 flex items-center justify-between border-b border-slate-800 z-30 sticky top-0">
+                        <div className="flex items-center gap-4 cursor-pointer group" onClick={() => setShowUserList(!showUserList)}>
+                            <div className="text-slate-400 hover:text-white transition-colors" onClick={(e) => { e.stopPropagation(); setScreen('home'); }}>
+                                <Icon name="arrow-left" size={24} />
+                            </div>
+                            <div className={`w-10 h-10 ${getAvatarColor(roomId)} rounded-xl flex items-center justify-center font-bold text-white shadow-md`}>{roomId.charAt(0)}</div>
+                            <div>
+                                <h2 className="font-bold text-lg leading-tight flex items-center gap-2 text-slate-100">
+                                    {roomId}
+                                    <button onClick={(e) => { e.stopPropagation(); toggleSaveRoom(); }} className={`transition-transform active:scale-125 ${isSaved ? 'text-amber-400' : 'text-slate-600 hover:text-amber-400'}`}>
+                                        <Icon name="star" size={16} fill={isSaved ? "currentColor" : "none"} />
+                                    </button>
+                                </h2>
+                                <p className="text-xs text-emerald-400 font-bold tracking-wide flex items-center gap-1.5">
+                                    <span className="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>
+                                    {onlineUsers.length} Online
+                                </p>
+                            </div>
+                        </div>
+                        <button onClick={() => navigator.clipboard.writeText(roomId)} className="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all active:scale-95"><Icon name="copy" /></button>
+                    </header>
+                    
+                    {/* Online List */}
+                    {showUserList && (
+                        <div className="absolute top-[80px] left-4 right-4 bg-slate-800/95 p-4 z-20 rounded-2xl border border-slate-700 shadow-2xl fade-in backdrop-blur-xl">
+                            <h3 className="text-xs font-bold text-slate-400 uppercase mb-3 px-1">Active Users</h3>
+                            <div className="flex flex-wrap gap-2">{onlineUsers.map((u,i)=>(<span key={i} className="text-sm bg-slate-700/50 border border-slate-600/50 px-3 py-1.5 rounded-lg text-slate-200 font-medium flex items-center gap-2"><span className="w-1.5 h-1.5 bg-emerald-400 rounded-full"></span>{u.displayName}</span>))}</div>
+                        </div>
+                    )}
+
+                    {/* Messages */}
+                    <main className="flex-1 overflow-y-auto p-4 space-y-6 bg-slate-950" onClick={() => setShowUserList(false)}>
+                        {messages.length === 0 && <div className="text-center mt-20 opacity-30"><Icon name="message-circle" size={48} className="mx-auto mb-2"/><p>Start the conversation</p></div>}
+                        
                         {messages.map((msg, i) => {
-                            const isMe = msg.uid === user.uid;
-                            const showHeader = i === 0 || messages[i - 1].uid !== msg.uid;
-                            
+                            const isMe = msg.uid === user?.uid;
+                            const showHeader = i === 0 || messages[i-1].uid !== msg.uid;
                             return (
-                                <div key={msg.id} className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} ${showHeader ? 'mt-4' : 'mt-1'}`}>
-                                    {/* Name tag */}
-                                    {showHeader && !isMe && <span className="text-[11px] text-gray-500 ml-2 mb-1 font-bold">{msg.displayName}</span>}
+                                <div key={msg.id} className={`flex ${isMe ? 'justify-end' : 'justify-start'} ${showHeader ? 'mt-6' : 'mt-1'} fade-in group`}>
+                                    {!isMe && showHeader && <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-xs font-bold mr-2 mt-0.5 shadow-sm text-white ${getAvatarColor(msg.displayName)}`}>{msg.displayName.charAt(0).toUpperCase()}</div>}
+                                    {!isMe && !showHeader && <div className="w-8 mr-2"></div>}
                                     
-                                    <div className={`group relative max-w-[85%] rounded-2xl px-3 py-2 text-sm shadow-sm ${isMe ? 'bg-indigo-500 text-white rounded-tr-none' : 'bg-white text-gray-800 rounded-tl-none'}`}>
+                                    <div className={`flex flex-col ${isMe ? 'items-end' : 'items-start'} max-w-[80%]`}>
+                                        {showHeader && !isMe && <span className="text-[11px] text-slate-400 ml-1 mb-1 font-bold">{msg.displayName}</span>}
                                         
-                                        {/* Reply Preview inside message */}
-                                        {msg.replyTo && (
-                                            <div className={`mb-2 rounded-lg p-2 text-xs border-l-4 ${isMe ? 'bg-indigo-600 border-indigo-300 text-indigo-100' : 'bg-gray-100 border-indigo-500 text-gray-600'}`}>
-                                                <p className="font-bold mb-0.5">{msg.replyTo.displayName}</p>
-                                                <p className="truncate opacity-80">{msg.replyTo.text}</p>
+                                        <div className={`relative px-5 py-3 text-[15px] shadow-sm break-words leading-relaxed transition-all
+                                            ${isMe 
+                                                ? 'bg-indigo-600 text-white rounded-[20px] rounded-tr-sm hover:bg-indigo-500' 
+                                                : 'bg-slate-800 text-slate-100 rounded-[20px] rounded-tl-sm border border-slate-700/50'}`}>
+                                            
+                                            {msg.replyTo && (
+                                                <div className={`mb-2 rounded-lg p-2 text-xs border-l-2 ${isMe ? 'bg-indigo-800/40 border-indigo-300/50' : 'bg-slate-900/40 border-slate-600'}`}>
+                                                    <p className="font-bold opacity-80 mb-0.5">{msg.replyTo.displayName}</p>
+                                                    <p className="truncate opacity-70 italic">{msg.replyTo.text}</p>
+                                                </div>
+                                            )}
+                                            
+                                            <div className="whitespace-pre-wrap"><Linkify text={msg.text} /></div>
+                                            
+                                            <div className="flex items-center gap-2 justify-end mt-1 opacity-60">
+                                                <span className="text-[10px] font-medium tracking-wide">
+                                                    {msg.createdAt ? new Date(msg.createdAt.seconds*1000).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}) : '...'}
+                                                </span>
+                                                {/* DELETE BUTTON: Visible for me */}
+                                                {isMe && (
+                                                    <button onClick={(e) => { e.stopPropagation(); handleDelete(msg.id); }} className="p-1 hover:text-red-300 hover:bg-red-500/20 rounded transition-colors" title="Delete">
+                                                        <Icon name="trash-2" size={12} />
+                                                    </button>
+                                                )}
                                             </div>
-                                        )}
-                                        
-                                        <p className="leading-relaxed break-words">{msg.text}</p>
-                                        
-                                        {/* Reply Button (Appears on Hover/Tap) */}
-                                        <button 
-                                            onClick={() => setReplyingTo(msg)}
-                                            className={`absolute top-0 bottom-0 ${isMe ? '-left-8' : '-right-8'} p-2 text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity`}
-                                        >
-                                            <Icon name="reply" size={16} />
-                                        </button>
+
+                                            {/* Reply Button */}
+                                            <button onClick={()=>setReplyingTo(msg)} className={`absolute top-2 ${isMe?'-left-9':'-right-9'} p-2 rounded-full bg-slate-800/50 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-indigo-400 hover:bg-slate-800 transition-all scale-90 hover:scale-100`}><Icon name="reply" size={16}/></button>
+                                        </div>
                                     </div>
                                 </div>
                             );
                         })}
-                        
-                        {/* Typing Indicator Bubble */}
-                        {typingUsers.length > 0 && (
-                            <div className="fade-in mt-2 ml-2 flex items-center gap-2 bg-white/80 p-2 rounded-full w-fit shadow-sm">
-                                <div className="flex gap-1">
-                                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce"></span>
-                                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></span>
-                                    <span className="w-1.5 h-1.5 bg-gray-500 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></span>
-                                </div>
-                                <span className="text-xs text-gray-500 font-medium">
-                                    {typingUsers.join(", ")} is typing...
-                                </span>
-                            </div>
-                        )}
+                        {typingUsers.length > 0 && <div className="fade-in ml-12 text-xs text-indigo-400 font-medium bg-indigo-500/10 px-3 py-1 rounded-full w-fit">{typingUsers.join(", ")} is typing...</div>}
                         <div ref={messagesEndRef} />
                     </main>
 
-                    {/* Reply Preview Bar */}
-                    {replyingTo && (
-                        <div className="bg-gray-100 p-2 border-l-4 border-indigo-500 flex justify-between items-center mx-2 mt-2 rounded-r-lg animate-in slide-in-from-bottom-2">
-                            <div className="overflow-hidden">
-                                <p className="text-xs font-bold text-indigo-600">Replying to {replyingTo.displayName}</p>
-                                <p className="text-xs text-gray-500 truncate">{replyingTo.text}</p>
-                            </div>
-                            <button onClick={() => setReplyingTo(null)} className="p-1 hover:bg-gray-200 rounded-full">
-                                <Icon name="x" size={16} className="text-gray-500" />
-                            </button>
-                        </div>
-                    )}
-
-                    {/* Input Area */}
-                    <footer className="bg-gray-100 p-2 pb-safe">
-                        <form onSubmit={handleSendMessage} className="flex items-end gap-2 bg-white p-2 rounded-3xl shadow-sm border border-gray-200">
-                            <input
-                                type="text"
-                                value={newMessage}
-                                onChange={handleTyping}
-                                placeholder={replyingTo ? "Type your reply..." : "Type a message..."}
-                                className="flex-1 max-h-32 bg-transparent border-none focus:ring-0 text-sm px-3 py-2 resize-none outline-none"
-                            />
-                            <button disabled={!newMessage.trim()} className="bg-indigo-600 text-white p-2.5 rounded-full hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-md">
-                                <Icon name="send" size={18} />
-                            </button>
+                    {/* Footer */}
+                    {replyingTo && <div className="bg-slate-900 p-3 border-l-4 border-indigo-500 flex justify-between items-center mx-3 mb-2 rounded-r-xl shadow-lg slide-up"><div className="text-xs text-slate-300"><span className="font-bold text-indigo-400 block mb-0.5">Replying to {replyingTo.displayName}</span> <span className="opacity-70 line-clamp-1">{replyingTo.text}</span></div><button onClick={()=>setReplyingTo(null)} className="p-2 hover:bg-slate-800 rounded-full"><Icon name="x" size={16}/></button></div>}
+                    
+                    <footer className="bg-slate-900/95 backdrop-blur-md p-3 pb-safe border-t border-slate-800 z-30">
+                        <form onSubmit={handleSendMessage} className="flex gap-2 bg-slate-950 p-2 rounded-[24px] border border-slate-800 focus-within:border-indigo-500/50 focus-within:ring-1 focus-within:ring-indigo-500/20 transition-all shadow-lg">
+                            <input type="text" value={newMessage} onChange={handleTyping} placeholder="Message..." 
+                                className="flex-1 bg-transparent text-slate-200 px-4 py-2 outline-none text-[15px] placeholder-slate-600" />
+                            <button disabled={!newMessage.trim()} className="bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-500 shadow-lg shadow-indigo-600/20 active:scale-90 transition-transform disabled:opacity-50 disabled:scale-100"><Icon name="send" size={20} className={newMessage.trim() ? 'ml-0.5' : ''}/></button>
                         </form>
                     </footer>
                 </div>
@@ -313,3 +455,4 @@
     </script>
 </body>
 </html>
+
