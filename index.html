@@ -2,466 +2,537 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Faltu - Chaotic Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        body { font-family: 'Inter', sans-serif; touch-action: manipulation; }
+        body { font-family: 'Inter', sans-serif; touch-action: manipulation; overscroll-behavior-y: none; }
         h1, h2, .fun-font { font-family: 'Fredoka', sans-serif; }
         
-        ::-webkit-scrollbar { width: 6px; }
+        /* Smooth Scrollbars */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 20px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
         
-        /* THEME VARIABLES - DEFAULT BLUE */
+        /* THEME VARIABLES - DYNAMIC & UNIQUE */
         :root {
-            --bg-grad: radial-gradient(circle at top, #1e3a8a, #0f172a, #020617); /* Deep Blue */
+            --bg-grad: radial-gradient(circle at 50% -20%, #1e3a8a, #0f172a, #020617);
             --accent-1: #3b82f6; /* Blue 500 */
             --accent-2: #06b6d4; /* Cyan 500 */
-            --glass-bg: rgba(15, 23, 42, 0.6);
+            --glass-bg: rgba(15, 23, 42, 0.5);
             --glass-border: rgba(255, 255, 255, 0.08);
             --text-main: #f8fafc;
         }
         
         body.theme-matrix {
-            --bg-grad: linear-gradient(to bottom, #052e16, #020617);
-            --accent-1: #22c55e; /* Green */
-            --accent-2: #4ade80; /* Light Green */
-            --glass-bg: rgba(5, 46, 22, 0.7);
+            --bg-grad: linear-gradient(180deg, #052e16 0%, #020617 100%);
+            --accent-1: #22c55e; --accent-2: #4ade80;
+            --glass-bg: rgba(5, 46, 22, 0.6);
             font-family: 'Courier New', monospace;
         }
 
         body.theme-sunset {
-            --bg-grad: linear-gradient(to bottom right, #9f1239, #450a0a, #020617);
-            --accent-1: #fbbf24; /* Amber */
-            --accent-2: #f43f5e; /* Rose */
-            --glass-bg: rgba(69, 10, 10, 0.6);
+            --bg-grad: linear-gradient(135deg, #9f1239, #450a0a, #020617);
+            --accent-1: #fbbf24; --accent-2: #f43f5e;
+            --glass-bg: rgba(69, 10, 10, 0.5);
         }
 
-        body { background: var(--bg-grad); color: var(--text-main); transition: background 0.6s ease-in-out; }
+        body.theme-cyber {
+            --bg-grad: radial-gradient(circle at top right, #4c1d95, #000000, #0f172a);
+            --accent-1: #d946ef; --accent-2: #0ea5e9;
+            --glass-bg: rgba(0, 0, 0, 0.6);
+        }
 
-        /* Animations */
-        .message-enter { animation: slideIn 0.3s cubic-bezier(0.2, 0.9, 0.4, 1) forwards; }
-        @keyframes slideIn { from { opacity: 0; transform: translateY(15px) scale(0.98); } to { opacity: 1; transform: translateY(0) scale(1); } }
-        
-        .shake-hard { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; }
-        @keyframes shake { 10%, 90% { transform: translate3d(-2px, 1px, 0); } 20%, 80% { transform: translate3d(3px, -2px, 0); } 30%, 50%, 70% { transform: translate3d(-6px, 2px, 0); } }
-        
-        .big-emoji-anim { animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.3) rotate(-10deg); } 50% { opacity: 1; transform: scale(1.2) rotate(5deg); } 100% { transform: scale(1) rotate(0); } }
+        body { background: var(--bg-grad); color: var(--text-main); transition: background 0.8s ease; }
 
-        .emoji-particle { position: fixed; top: -50px; font-size: 32px; animation: fall linear forwards; z-index: 100; pointer-events: none; }
+        /* Advanced Animations - Hardware Accelerated for Smoothness */
+        .message-enter { animation: slideIn 0.35s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; transform: translateZ(0); }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(15px) scale(0.97); } to { opacity: 1; transform: translateY(0) scale(1); } }
+        
+        .shake-hard { animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both; transform: translateZ(0); }
+        @keyframes shake { 10%, 90% { transform: translate3d(-3px, 2px, 0) rotate(-1deg); } 20%, 80% { transform: translate3d(4px, -2px, 0) rotate(1deg); } 30%, 50%, 70% { transform: translate3d(-8px, 4px, 0) rotate(-2deg); } }
+        
+        .nuke-flash { animation: nukeAnim 1.5s ease-out forwards; }
+        @keyframes nukeAnim { 0% { background-color: white; opacity: 1; } 50% { background-color: #ef4444; opacity: 0.8; } 100% { background-color: transparent; opacity: 0; pointer-events: none; } }
+
+        .big-emoji-anim { animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; display: inline-block; will-change: transform; }
+        @keyframes bounceIn { 0% { opacity: 0; transform: scale(0.1) rotate(-15deg); } 50% { opacity: 1; transform: scale(1.3) rotate(10deg); } 100% { transform: scale(1) rotate(0); } }
+
+        .emoji-particle { position: fixed; top: -50px; font-size: 36px; animation: fall linear forwards; z-index: 100; pointer-events: none; text-shadow: 0 4px 15px rgba(0,0,0,0.4); transform: translateZ(0); }
         @keyframes fall { to { transform: translateY(110vh) rotate(360deg); } }
 
-        .animate-fade-in-up { animation: fadeInUp 0.6s ease-out forwards; }
+        .animate-fade-in-up { animation: fadeInUp 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; will-change: transform, opacity; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
-        .scale-in { animation: scaleIn 0.2s ease-out forwards; }
-        @keyframes scaleIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
+        /* UI Utilities */
         .text-gradient { background: linear-gradient(to right, var(--accent-1), var(--accent-2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .bg-gradient-btn { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); }
+        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3); }
         
-        .glass-panel { background: var(--glass-bg); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid var(--glass-border); }
+        /* Message Bubbles UX Enhancement */
+        .msg-bubble-me { background: linear-gradient(135deg, var(--accent-1), var(--accent-2)); color: white; border-radius: 1.25rem; border-top-right-radius: 0.25rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15); border: 1px solid rgba(255,255,255,0.15); }
+        .msg-bubble-them { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); color: #f1f5f9; border-radius: 1.25rem; border-top-left-radius: 0.25rem; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); border: 1px solid rgba(255,255,255,0.08); }
+        .msg-bubble-anon { background: rgba(15, 23, 42, 0.8); border: 1px dashed rgba(255,255,255,0.2); color: #cbd5e1; border-radius: 1.25rem; border-top-left-radius: 0.25rem; }
+
+        /* Floating Background Orbs */
+        .bg-orb { position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.4; z-index: -1; animation: float 10s infinite alternate ease-in-out; transform: translateZ(0); }
+        @keyframes float { 0% { transform: translate(0, 0) scale(1); } 100% { transform: translate(30px, -50px) scale(1.2); } }
 
         /* Rich Text Styles */
-        .msg-content a { color: var(--accent-2); text-decoration: underline; text-underline-offset: 2px; }
-        .msg-content strong { color: var(--accent-1); font-weight: 800; }
+        .msg-content a { color: var(--accent-2); text-decoration: underline; text-underline-offset: 3px; }
+        .msg-content strong { color: var(--accent-1); font-weight: 800; filter: brightness(1.2); }
         .msg-content em { font-style: italic; opacity: 0.9; }
-        .msg-content code { background: rgba(0,0,0,0.3); padding: 2px 5px; rounded: 4px; font-family: monospace; color: #fbbf24; border-radius: 4px; }
-        .mention { background: rgba(251, 191, 36, 0.2); color: #fbbf24; padding: 0 4px; border-radius: 4px; font-weight: bold; border: 1px solid rgba(251, 191, 36, 0.3); }
+        .msg-content code { background: rgba(0,0,0,0.4); padding: 2px 6px; font-family: 'Courier New', monospace; color: #fbbf24; border-radius: 6px; font-size: 0.9em; border: 1px solid rgba(251, 191, 36, 0.2); }
+        .mention { background: rgba(251, 191, 36, 0.15); color: #fbbf24; padding: 2px 6px; border-radius: 6px; font-weight: 800; border: 1px solid rgba(251, 191, 36, 0.3); box-shadow: 0 0 10px rgba(251,191,36,0.1); }
 
-        /* Poll Styles */
-        .poll-bar { transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+        /* Pulse / Burn Timer for Images */
+        .fuse-burn { animation: burn 1s infinite alternate; }
+        @keyframes burn { 0% { text-shadow: 0 0 5px #ef4444; color: #fca5a5; } 100% { text-shadow: 0 0 20px #ef4444, 0 0 10px #b91c1c; color: #fff; } }
 
         html, body { overflow: hidden; height: 100%; position: fixed; width: 100%; }
-        /* Adjusted textarea height for mobile - more compact */
-        textarea { resize: none; min-height: 40px; max-height: 120px; field-sizing: content; }
+        
+        /* Smooth text area resize */
+        textarea { resize: none; min-height: 44px; max-height: 120px; field-sizing: content; transition: height 0.15s ease-out; }
+        
+        /* Desktop vs Mobile adjustments */
+        @media (min-width: 768px) {
+            .desktop-sidebar { display: flex !important; }
+            .mobile-header-menu { display: none !important; }
+        }
     </style>
 </head>
 <body id="main-body">
 
-    <!-- LOGIN SCREEN - FIXED FOR MOBILE -->
-    <div id="login-screen" class="absolute inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/80 backdrop-blur-md">
-        
-        <!-- Adjusted padding/margins for mobile visibility -->
-        <div class="w-full max-w-6xl flex flex-col md:flex-row gap-6 md:gap-16 items-center justify-center min-h-[100dvh] md:min-h-[500px] p-4 py-8 md:p-10">
+    <!-- Ambient Background Elements -->
+    <div class="bg-orb w-96 h-96 top-[-10%] left-[-10%] bg-[var(--accent-1)] pointer-events-none"></div>
+    <div class="bg-orb w-[30rem] h-[30rem] bottom-[-10%] right-[-10%] bg-[var(--accent-2)] pointer-events-none" style="animation-delay: -5s;"></div>
+
+    <!-- Nuke Flash Overlay -->
+    <div id="nuke-overlay" class="fixed inset-0 z-[100] hidden pointer-events-none"></div>
+
+    <!-- LOGIN SCREEN (Responsive Grid) -->
+    <div id="login-screen" class="absolute inset-0 z-50 flex items-center justify-center overflow-y-auto bg-slate-950/40 backdrop-blur-xl">
+        <div class="w-full max-w-6xl grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-center min-h-[100dvh] md:min-h-0 p-6 py-12 md:p-12">
             
             <!-- LEFT COLUMN: Identity & Fun Stats -->
-            <div class="flex-1 w-full max-w-md flex flex-col items-center md:items-start text-center md:text-left space-y-4 md:space-y-8 animate-fade-in-up">
-                
-                <!-- Logo & Intro -->
-                <div class="space-y-2">
-                    <!-- Reduced text size slightly for mobile to ensure fit -->
-                    <h1 class="text-5xl md:text-8xl font-black text-white tracking-tight drop-shadow-2xl fun-font leading-none">
+            <div class="flex flex-col items-center md:items-start text-center md:text-left space-y-8 animate-fade-in-up">
+                <div class="space-y-3">
+                    <h1 class="text-6xl md:text-8xl md:text-[7rem] font-black text-white tracking-tight drop-shadow-2xl fun-font leading-none hover:scale-105 transition duration-300">
                         Faltu<span class="text-[var(--accent-1)]">.</span>
                     </h1>
-                    <p id="daily-vibe" class="text-[var(--accent-2)] text-sm md:text-lg font-bold uppercase tracking-widest opacity-90">Loading Vibe...</p>
-                    <div id="fortune-box" class="bg-white/5 border border-white/10 rounded-xl p-2 md:p-3 text-xs md:text-sm text-slate-300 italic mt-2 inline-block">
-                        🥠 Fortune: <span id="fortune-text">...</span>
+                    <p id="daily-vibe" class="text-[var(--accent-2)] text-base md:text-xl font-bold uppercase tracking-widest opacity-90">Loading Vibe...</p>
+                    <div id="fortune-box" class="glass-panel rounded-xl p-3 px-4 text-xs md:text-sm text-slate-200 italic mt-4 inline-block shadow-lg border-l-4 border-[var(--accent-1)]">
+                        🥠 <span id="fortune-text">...</span>
                     </div>
                 </div>
 
                 <!-- Avatar & Stats Card -->
-                <div class="glass-panel p-5 md:p-6 rounded-[2rem] md:rounded-[2.5rem] w-full border border-white/10 relative overflow-hidden group hover:border-[var(--accent-1)]/30 transition duration-500">
-                     <div class="absolute top-0 right-0 p-4 opacity-50">
-                        <i data-lucide="sparkles" class="w-6 h-6 md:w-8 md:h-8 text-white/20"></i>
-                    </div>
-
-                    <div class="flex flex-col md:flex-row items-center gap-4 md:gap-6">
-                        <!-- Live Avatar -->
-                        <div class="relative w-24 h-24 md:w-28 md:h-28 flex-shrink-0">
-                            <div class="absolute inset-0 bg-gradient-to-tr from-[var(--accent-1)] to-[var(--accent-2)] rounded-full blur-xl opacity-40 group-hover:opacity-60 transition duration-500"></div>
+                <div class="glass-panel p-6 rounded-[2.5rem] w-full max-w-sm border border-white/10 relative overflow-hidden group hover:border-[var(--accent-1)]/40 transition duration-500 shadow-2xl">
+                    <div class="absolute -top-10 -right-10 w-32 h-32 bg-[var(--accent-1)] rounded-full mix-blend-screen filter blur-[50px] opacity-20 group-hover:opacity-40 transition"></div>
+                    <div class="flex flex-row items-center gap-5">
+                        <div class="relative w-28 h-28 flex-shrink-0">
                             <img id="login-avatar-preview" src="https://api.dicebear.com/9.x/adventurer/svg?seed=Faltu" alt="Avatar" 
-                                class="relative w-full h-full rounded-full bg-slate-900 border-4 border-white/10 shadow-2xl object-cover transform group-hover:scale-105 transition duration-300" />
-                            
-                            <!-- Roast Button -->
-                            <button id="roast-btn" class="absolute -bottom-1 -right-1 md:-bottom-2 md:-right-2 bg-red-500 text-white p-1.5 md:p-2 rounded-full border-4 border-slate-900 shadow-lg hover:scale-110 transition active:scale-95" title="Roast My Vibe">
-                                <i data-lucide="flame" class="w-3.5 h-3.5 md:w-4 md:h-4"></i>
+                                class="relative w-full h-full rounded-full bg-slate-900 border-[3px] border-white/20 shadow-[0_0_20px_rgba(0,0,0,0.5)] object-cover transform group-hover:scale-110 transition duration-500" />
+                            <button id="roast-btn" class="absolute bottom-0 right-0 bg-red-500 text-white p-2 rounded-full border-4 border-slate-900 shadow-[0_0_15px_rgba(239,68,68,0.5)] hover:bg-red-400 hover:scale-125 transition active:scale-90" title="Roast My Vibe">
+                                <i data-lucide="flame" class="w-4 h-4"></i>
                             </button>
                         </div>
-
-                        <!-- Stats -->
-                        <div class="flex-1 space-y-2 md:space-y-3 w-full">
+                        <div class="flex-1 space-y-3">
                             <div>
-                                <p class="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-0.5">Rank</p>
-                                <h3 id="user-rank" class="text-xl md:text-xl font-black text-white fun-font leading-none">Rookie</h3>
+                                <p class="text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-0.5">Rank</p>
+                                <h3 id="user-rank" class="text-2xl font-black text-white fun-font leading-none text-shadow-sm">Rookie</h3>
                             </div>
                             <div>
-                                <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">
+                                <div class="flex justify-between text-[10px] uppercase font-bold text-slate-400 tracking-widest mb-1.5">
                                     <span>Chaos Score</span>
-                                    <span id="user-score" class="text-[var(--accent-1)]">0</span>
+                                    <span id="user-score" class="text-[var(--accent-1)] text-xs font-black">0</span>
                                 </div>
-                                <div class="w-full bg-black/40 h-2 rounded-full overflow-hidden">
-                                    <div id="rank-progress" class="bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)] h-full rounded-full w-0 transition-all duration-1000"></div>
+                                <div class="w-full bg-black/50 h-2.5 rounded-full overflow-hidden shadow-inner border border-white/5">
+                                    <div id="rank-progress" class="bg-gradient-btn h-full rounded-full w-0 transition-all duration-1000 shadow-[0_0_10px_var(--accent-1)]"></div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- Global Counter -->
-                <div class="flex items-center gap-2 opacity-60">
-                    <div class="flex -space-x-2">
-                         <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-700 border border-slate-800"></div>
-                         <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-600 border border-slate-800"></div>
-                         <div class="w-5 h-5 md:w-6 md:h-6 rounded-full bg-slate-500 border border-slate-800"></div>
-                    </div>
-                    <span class="text-xs font-bold text-slate-400"><span id="global-counter">...</span> Yappers Worldwide</span>
                 </div>
             </div>
 
             <!-- RIGHT COLUMN: Login Form -->
-            <div class="flex-1 w-full max-w-md">
-                <div class="glass-panel p-6 md:p-10 rounded-[2rem] md:rounded-[2.5rem] shadow-2xl ring-1 ring-white/10 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)]"></div>
+            <div class="w-full max-w-md mx-auto md:mx-0">
+                <div class="glass-panel p-8 md:p-10 rounded-[2.5rem] shadow-2xl ring-1 ring-white/10 relative overflow-hidden backdrop-blur-2xl">
+                    <div class="absolute top-0 left-0 w-full h-1.5 bg-gradient-btn"></div>
                     
-                    <form id="login-form" class="space-y-5 md:space-y-6">
+                    <form id="login-form" class="space-y-6">
                         <div>
-                            <label class="block text-xs font-bold opacity-80 uppercase tracking-widest mb-2 ml-3 text-slate-400">Join a Room</label>
+                            <label class="block text-xs font-bold opacity-70 uppercase tracking-widest mb-2 ml-4 text-slate-300">Join a Room</label>
                             <div class="relative group">
-                                <i data-lucide="hash" class="absolute left-5 top-5 w-6 h-6 opacity-50 group-focus-within:opacity-100 group-focus-within:text-[var(--accent-1)] transition"></i>
+                                <i data-lucide="hash" class="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 opacity-40 group-focus-within:opacity-100 group-focus-within:text-[var(--accent-1)] transition duration-300"></i>
                                 <input type="text" id="room-input" placeholder="e.g. chill-zone" required 
-                                    class="w-full pl-14 pr-6 py-4 md:py-5 rounded-3xl bg-black/20 border border-white/5 text-white focus:border-[var(--accent-1)] focus:bg-black/40 outline-none transition-all font-semibold placeholder-slate-500 text-lg md:text-xl shadow-inner" />
+                                    class="w-full pl-14 pr-6 py-4 rounded-3xl bg-black/30 border border-white/10 text-white focus:border-[var(--accent-1)] focus:bg-black/50 outline-none transition-all duration-300 font-semibold placeholder-slate-500 text-lg shadow-inner focus:shadow-[0_0_20px_rgba(59,130,246,0.15)]" />
                             </div>
                             
                             <!-- Trending Pills -->
-                            <div class="mt-4">
-                                <p class="text-[10px] font-bold opacity-40 uppercase tracking-widest ml-3 mb-2">Trending Now</p>
+                            <div class="mt-4 pl-2">
                                 <div class="flex flex-wrap gap-2" id="trending-rooms"></div>
                             </div>
                         </div>
 
                         <div>
-                            <label class="block text-xs font-bold opacity-80 uppercase tracking-widest mb-2 ml-3 text-slate-400">Your Alias</label>
+                            <label class="block text-xs font-bold opacity-70 uppercase tracking-widest mb-2 ml-4 text-slate-300">Your Alias</label>
                             <div class="relative group flex gap-3">
                                 <div class="relative flex-1">
-                                    <i data-lucide="user" class="absolute left-5 top-5 w-6 h-6 opacity-50 group-focus-within:opacity-100 group-focus-within:text-[var(--accent-2)] transition"></i>
+                                    <i data-lucide="user" class="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 opacity-40 group-focus-within:opacity-100 group-focus-within:text-[var(--accent-2)] transition duration-300"></i>
                                     <input type="text" id="username-input" placeholder="Name" required maxlength="15"
-                                        class="w-full pl-14 pr-6 py-4 md:py-5 rounded-3xl bg-black/20 border border-white/5 text-white focus:border-[var(--accent-2)] focus:bg-black/40 outline-none transition-all font-semibold placeholder-slate-500 text-lg md:text-xl shadow-inner" />
+                                        class="w-full pl-14 pr-6 py-4 rounded-3xl bg-black/30 border border-white/10 text-white focus:border-[var(--accent-2)] focus:bg-black/50 outline-none transition-all duration-300 font-semibold placeholder-slate-500 text-lg shadow-inner focus:shadow-[0_0_20px_rgba(6,182,212,0.15)]" />
                                 </div>
-                                <button type="button" id="random-name-btn" class="bg-white/10 hover:bg-white/20 border border-white/5 p-4 md:p-5 rounded-3xl transition active:scale-95 flex-shrink-0" title="Randomize">
-                                    <i data-lucide="dices" class="w-6 h-6 md:w-7 md:h-7 text-yellow-400"></i>
+                                <button type="button" id="random-name-btn" class="bg-white/5 hover:bg-white/10 border border-white/10 p-4 rounded-3xl transition duration-300 active:scale-95 flex-shrink-0 shadow-lg group-hover:border-yellow-500/30" title="Randomize">
+                                    <i data-lucide="dices" class="w-6 h-6 text-yellow-400"></i>
                                 </button>
                             </div>
                         </div>
                         <button type="submit" 
-                            class="w-full bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)] text-white font-bold py-4 md:py-5 rounded-3xl shadow-xl shadow-indigo-500/20 transition transform active:scale-[0.97] flex items-center justify-center gap-3 mt-2 text-lg md:text-xl tracking-wide group hover:brightness-110">
-                            Enter Chaos <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-1 transition"></i>
+                            class="w-full bg-gradient-btn text-white font-bold py-4.5 rounded-3xl shadow-[0_10px_30px_-10px_var(--accent-1)] transition-all transform hover:-translate-y-1 hover:brightness-110 active:scale-[0.98] flex items-center justify-center gap-3 mt-4 text-xl tracking-wide group h-16">
+                            Enter Chaos <i data-lucide="arrow-right" class="w-6 h-6 group-hover:translate-x-2 transition duration-300"></i>
                         </button>
                     </form>
+
+                    <!-- HOME SCREEN FAVORITES -->
+                    <div id="home-fav-section" class="mt-8 hidden animate-fade-in-up border-t border-white/10 pt-6">
+                        <h3 class="text-[10px] font-bold opacity-80 uppercase tracking-widest mb-3 ml-2 text-[var(--accent-2)] flex items-center gap-1.5">
+                            <i data-lucide="star" class="w-3.5 h-3.5"></i> Jump Back In
+                        </h3>
+                        <div class="flex flex-wrap gap-2 pl-1" id="home-fav-rooms">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center justify-center gap-2 opacity-60">
+                    <i data-lucide="globe-2" class="w-4 h-4"></i>
+                    <span class="text-xs font-bold text-slate-300"><span id="global-counter">...</span> Yappers Worldwide</span>
                 </div>
             </div>
-
-            <div id="favorites-section" class="hidden animate-fade-in-up w-full text-center md:absolute md:bottom-8 md:left-0 pb-8 md:pb-0">
-                <p class="text-xs font-bold opacity-40 uppercase tracking-widest mb-2">Jump Back In</p>
-                <div id="favorites-list" class="flex flex-wrap justify-center gap-3"></div>
-            </div>
-
         </div>
     </div>
 
-    <!-- MAIN CHAT INTERFACE -->
-    <div id="chat-screen" class="hidden flex-col h-full w-full max-w-4xl mx-auto shadow-2xl relative overflow-hidden md:border-x md:border-white/10 bg-black/20">
+    <!-- MAIN APP INTERFACE (Grid for Desktop, Stack for Mobile) -->
+    <div id="chat-screen" class="hidden h-full w-full mx-auto relative overflow-hidden md:flex md:flex-row">
         
-        <header class="glass-panel p-4 px-5 flex justify-between items-center absolute top-0 w-full z-30 shadow-lg h-20">
-            <div class="flex items-center gap-4 overflow-hidden flex-1">
-                <button id="logout-btn" class="w-11 h-11 flex-shrink-0 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/5 transition hover:scale-105">
-                    <i data-lucide="chevron-left" class="w-6 h-6"></i>
-                </button>
-                <div class="leading-tight overflow-hidden">
-                    <h2 class="font-black text-white text-xl flex items-center gap-2 truncate tracking-tight">
-                        <span id="room-display-name" class="text-gradient truncate">room</span>
-                    </h2>
-                    <div class="flex items-center gap-1.5">
-                        <span id="online-count" class="text-xs font-bold opacity-80 flex items-center gap-1.5 bg-black/20 px-2 py-0.5 rounded-full border border-white/5 cursor-pointer hover:bg-white/10 transition">
-                            <span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span> 1 Online
-                        </span>
+        <!-- DESKTOP SIDEBAR (Hidden on mobile) -->
+        <aside class="w-80 glass-panel border-r border-white/5 hidden md:flex flex-col z-40 shadow-2xl relative h-full">
+            <div class="p-6 border-b border-white/5 bg-black/20 flex items-center justify-between">
+                <h1 class="text-3xl font-black text-white tracking-tight fun-font">Faltu<span class="text-[var(--accent-1)]">.</span></h1>
+                <button id="sidebar-theme-btn" class="p-2.5 rounded-full hover:bg-white/10 text-slate-300 transition" title="Change Vibe"><i data-lucide="palette" class="w-5 h-5"></i></button>
+            </div>
+            
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-5 space-y-8">
+                <!-- User Profile Snippet -->
+                <div class="bg-white/5 rounded-2xl p-4 border border-white/5 flex items-center gap-4 hover:bg-white/10 transition">
+                    <img id="sidebar-avatar" src="" class="w-12 h-12 rounded-full border-2 border-[var(--accent-1)] bg-slate-800 shadow-lg">
+                    <div class="overflow-hidden">
+                        <p id="sidebar-username" class="font-bold text-white text-base truncate">User</p>
+                        <p class="text-[10px] text-[var(--accent-2)] uppercase tracking-wider font-bold">Score: <span id="sidebar-score">0</span></p>
                     </div>
+                </div>
+
+                <!-- Active Room Info -->
+                <div>
+                    <h3 class="text-xs font-bold opacity-50 uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2"><i data-lucide="map-pin" class="w-4 h-4"></i> Current Room</h3>
+                    <div class="bg-black/30 rounded-2xl p-4 border border-[var(--accent-1)]/30 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
+                        <p id="sidebar-room-name" class="font-black text-xl text-white truncate mb-2">#room</p>
+                        <div class="flex gap-2">
+                             <button id="sidebar-judge-btn" class="flex-1 bg-purple-500/20 hover:bg-purple-500/40 text-purple-300 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 transition border border-purple-500/30"><i data-lucide="gavel" class="w-3.5 h-3.5"></i> Judge</button>
+                             <button id="sidebar-buzz-btn" class="flex-1 bg-yellow-500/20 hover:bg-yellow-500/40 text-yellow-300 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 transition border border-yellow-500/30"><i data-lucide="zap" class="w-3.5 h-3.5"></i> Buzz</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Online Users -->
+                <div>
+                    <h3 class="text-xs font-bold opacity-50 uppercase tracking-widest text-slate-400 mb-3 flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i data-lucide="users" class="w-4 h-4"></i> Online Now</span>
+                        <span id="sidebar-online-count" class="bg-[var(--accent-1)] text-white px-2 py-0.5 rounded-full text-[10px]">1</span>
+                    </h3>
+                    <div id="sidebar-online-list" class="space-y-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Favorites -->
+                <div id="sidebar-fav-section">
+                    <h3 class="text-xs font-bold opacity-50 uppercase tracking-widest text-slate-400 mb-3 flex items-center gap-2"><i data-lucide="star" class="w-4 h-4"></i> Favorite Rooms</h3>
+                    <div id="sidebar-fav-list" class="flex flex-wrap gap-2"></div>
                 </div>
             </div>
             
-            <div class="flex items-center gap-2">
+            <div class="p-5 border-t border-white/5 bg-black/20">
+                <button id="sidebar-logout-btn" class="w-full bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 font-bold py-3 rounded-2xl transition flex items-center justify-center gap-2 text-sm shadow-sm"><i data-lucide="log-out" class="w-4 h-4"></i> Leave Room</button>
+            </div>
+        </aside>
+
+        <!-- MAIN CHAT AREA -->
+        <main class="flex-1 flex flex-col relative h-full bg-black/30 md:bg-transparent">
+            
+            <!-- Mobile/General Header -->
+            <header class="glass-panel p-3 md:p-4 px-4 md:px-6 flex justify-between items-center absolute top-0 w-full z-30 shadow-lg h-16 md:h-20 border-b border-white/5 backdrop-blur-3xl">
                 
-                <!-- BUZZ -->
-                <button id="buzz-btn" class="w-11 h-11 flex items-center justify-center rounded-full bg-yellow-500 hover:bg-yellow-400 text-slate-900 shadow-lg transition active:scale-90 border border-white/10" title="Buzz!">
-                    <i data-lucide="zap" class="w-5 h-5 fill-slate-900"></i>
-                </button>
-
-                <div class="w-[1px] h-8 bg-white/10 mx-1"></div>
-
-                <!-- MENU DROPDOWN BUTTON -->
-                <div class="relative">
-                    <button id="menu-btn" class="w-11 h-11 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/5 transition active:scale-90">
-                        <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                <!-- Mobile Left Side -->
+                <div class="flex items-center gap-3 overflow-hidden flex-1 md:hidden">
+                    <button id="mobile-back-btn" class="w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition">
+                        <i data-lucide="chevron-left" class="w-6 h-6"></i>
                     </button>
+                    <div class="leading-tight overflow-hidden">
+                        <h2 class="font-black text-white text-lg flex items-center gap-1.5 truncate tracking-tight">
+                            <i data-lucide="hash" class="w-4 h-4 text-[var(--accent-1)]"></i>
+                            <span id="mobile-room-name" class="truncate">room</span>
+                        </h2>
+                        <span id="mobile-online-count" class="text-[10px] font-bold opacity-80 flex items-center gap-1.5 text-green-400">
+                            <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span> 1 Online
+                        </span>
+                    </div>
+                </div>
+
+                <!-- PC Left Side (Minimal since Sidebar exists) -->
+                <div class="hidden md:flex items-center gap-4 flex-1">
+                     <h2 class="font-black text-white text-xl flex items-center gap-2 tracking-wide"><i data-lucide="message-square" class="w-5 h-5 text-[var(--accent-1)]"></i> Chat</h2>
+                </div>
+                
+                <!-- Right Side Actions -->
+                <div class="flex items-center gap-1.5 md:gap-3">
+                    <!-- Mobile specific Buzz -->
+                    <button id="mobile-buzz-btn" class="md:hidden w-10 h-10 flex items-center justify-center rounded-full bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/40 border border-yellow-500/30 transition active:scale-90" title="Buzz!">
+                        <i data-lucide="zap" class="w-4 h-4 fill-yellow-400"></i>
+                    </button>
+
+                    <button id="about-btn" class="w-10 h-10 flex items-center justify-center rounded-full bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/20 transition active:scale-90" title="Commands & Help">
+                        <i data-lucide="terminal" class="w-4 h-4"></i>
+                    </button>
+
+                    <div class="w-[1px] h-6 bg-white/10 mx-1"></div>
+
+                    <!-- DROPDOWN MENU -->
+                    <div class="relative">
+                        <button id="menu-btn" class="w-10 h-10 flex items-center justify-center rounded-full bg-white/5 hover:bg-white/10 border border-white/10 transition active:scale-90 text-white">
+                            <i data-lucide="more-vertical" class="w-5 h-5"></i>
+                        </button>
+                        
+                        <!-- Dropdown Content -->
+                        <div id="dropdown-menu" class="hidden absolute right-0 top-12 w-56 bg-slate-900/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 origin-top-right transform transition-all duration-200">
+                            
+                            <div class="md:hidden">
+                                <button id="mobile-judge-btn" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 text-sm font-bold text-purple-400 flex items-center gap-3 transition group">
+                                    <div class="p-1.5 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30"><i data-lucide="gavel" class="w-4 h-4"></i></div>
+                                    AI Aura Judge
+                                </button>
+                                <!-- NEW VIBE BUTTON FOR MOBILE -->
+                                <button id="mobile-theme-btn" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 text-sm font-bold text-[var(--accent-1)] flex items-center gap-3 transition group">
+                                    <div class="p-1.5 bg-[var(--accent-1)]/20 rounded-lg group-hover:bg-[var(--accent-1)]/30"><i data-lucide="palette" class="w-4 h-4"></i></div>
+                                    Change Vibe
+                                </button>
+                                <div class="h-[1px] bg-white/10 mx-2 my-1"></div>
+                            </div>
+
+                            <!-- Soundboard / SFX Toggle -->
+                            <div class="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Chaos Tools</div>
+                            <button id="sfx-fart-btn" class="w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm font-bold text-amber-400 flex items-center gap-3 transition">
+                                <i data-lucide="wind" class="w-4 h-4"></i> Fart Sound
+                            </button>
+                            <button id="sfx-bruh-btn" class="w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm font-bold text-orange-400 flex items-center gap-3 transition">
+                                <i data-lucide="frown" class="w-4 h-4"></i> "Bruh"
+                            </button>
+                            <button id="sfx-magic-btn" class="w-full text-left px-4 py-2.5 rounded-xl hover:bg-white/10 text-sm font-bold text-blue-400 flex items-center gap-3 transition">
+                                <i data-lucide="sparkles" class="w-4 h-4"></i> Magic
+                            </button>
+
+                            <div class="h-[1px] bg-white/10 mx-2 my-1"></div>
+
+                            <button id="menu-sound-btn" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 text-sm font-bold text-slate-200 flex items-center gap-3 transition group">
+                                <div id="menu-sound-icon" class="p-1.5 bg-white/5 rounded-lg group-hover:bg-white/10"><i data-lucide="volume-2" class="w-4 h-4"></i></div>
+                                <span id="menu-sound-text">Mute App Sounds</span>
+                            </button>
+
+                            <button id="fav-btn" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 text-sm font-bold text-pink-400 flex items-center gap-3 transition group">
+                                <div class="p-1.5 bg-pink-500/10 rounded-lg"><i data-lucide="heart" class="w-4 h-4"></i></div>
+                                Favorite Room
+                            </button>
+
+                            <button id="share-btn" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/10 text-sm font-bold text-slate-200 flex items-center gap-3 transition group">
+                                <div class="p-1.5 bg-white/5 rounded-lg"><i data-lucide="share-2" class="w-4 h-4"></i></div>
+                                Copy Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div id="messages-container" class="flex-1 overflow-y-auto pt-20 md:pt-24 pb-32 md:pb-36 px-4 md:px-8 w-full scroll-smooth">
+                <div id="loading-spinner" class="flex flex-col items-center justify-center h-full gap-4 opacity-60">
+                    <i data-lucide="loader-2" class="animate-spin w-12 h-12 text-[var(--accent-1)]"></i>
+                    <span class="text-lg font-medium fun-font opacity-80 tracking-widest">CONNECTING...</span>
+                </div>
+            </div>
+
+            <button id="scroll-down-btn" class="hidden absolute bottom-32 right-6 z-20 w-12 h-12 bg-slate-800/90 backdrop-blur text-[var(--accent-1)] rounded-full shadow-[0_0_20px_rgba(0,0,0,0.5)] border border-white/10 items-center justify-center hover:bg-slate-700 hover:scale-110 transition duration-300 animate-bounce">
+                <i data-lucide="arrow-down" class="w-6 h-6"></i>
+            </button>
+
+            <!-- Typing Indicator -->
+            <div id="typing-indicator" class="hidden absolute bottom-32 left-6 md:left-10 z-20 flex items-center gap-3 bg-black/70 backdrop-blur-xl px-5 py-3 rounded-2xl border border-white/10 shadow-2xl transform transition-all duration-300 translate-y-4 opacity-0">
+                 <div class="flex gap-1.5 items-center">
+                    <div class="w-2.5 h-2.5 bg-[var(--accent-1)] rounded-full animate-bounce"></div>
+                    <div class="w-2.5 h-2.5 bg-[var(--accent-2)] rounded-full animate-bounce" style="animation-delay: 0.15s"></div>
+                    <div class="w-2.5 h-2.5 bg-white rounded-full animate-bounce" style="animation-delay: 0.3s"></div>
+                </div>
+                <span id="typing-text" class="text-xs font-bold uppercase tracking-wider text-slate-200">Someone is typing...</span>
+            </div>
+
+            <div id="emoji-picker" class="hidden absolute bottom-28 left-4 md:left-8 z-40 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-[2rem] shadow-2xl p-4 grid grid-cols-6 gap-2 w-80 max-h-72 overflow-y-auto custom-scrollbar transform transition-all origin-bottom-left"></div>
+
+            <!-- FOOTER INPUT AREA (Sleek Floating Dock Design) -->
+            <footer class="absolute bottom-0 w-full p-3 md:p-5 z-30 pb-safe pointer-events-none">
+                
+                <div id="reply-preview" class="hidden mx-auto max-w-4xl flex justify-between items-center bg-black/70 backdrop-blur-md px-5 py-3 rounded-t-2xl border-l-4 border-[var(--accent-1)] border-t border-r border-white/10 mb-[-10px] shadow-lg overflow-hidden relative pointer-events-auto">
+                    <div class="relative z-10 overflow-hidden w-full pr-4">
+                        <span class="text-[10px] font-black text-[var(--accent-1)] uppercase tracking-widest flex items-center gap-1.5 mb-1"><i data-lucide="reply" class="w-3 h-3"></i> Replying to <span id="reply-to-user" class="text-white">User</span></span>
+                        <p id="reply-to-text" class="text-sm text-slate-300 truncate font-medium">...</p>
+                    </div>
+                    <button id="cancel-reply" class="relative z-10 p-2 rounded-full hover:bg-white/10 bg-black/40 transition flex-shrink-0"><i data-lucide="x" class="w-4 h-4 text-slate-300"></i></button>
+                </div>
+
+                <form id="message-form" class="mx-auto max-w-4xl flex gap-2 items-end bg-slate-900/80 backdrop-blur-xl p-2 rounded-[2rem] border border-white/10 focus-within:border-[var(--accent-1)] focus-within:bg-slate-900/95 focus-within:shadow-[0_0_25px_rgba(59,130,246,0.2)] transition-all duration-300 relative shadow-2xl pointer-events-auto">
                     
-                    <!-- Dropdown Content -->
-                    <div id="dropdown-menu" class="hidden absolute right-0 top-14 w-60 bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl p-2 z-50 flex flex-col gap-1 scale-in origin-top-right">
-                        
-                        <!-- ABOUT FEATURE -->
-                        <button id="about-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-cyan-400 flex items-center gap-3 transition group">
-                            <div class="p-2 bg-cyan-500/20 rounded-lg group-hover:bg-cyan-500/30"><i data-lucide="info" class="w-4 h-4"></i></div>
-                            How to Chaos?
-                        </button>
-                        
-                        <div class="h-[1px] bg-white/10 mx-2 my-1"></div>
+                    <input type="file" id="image-upload" accept="image/*" class="hidden">
+                    <button type="button" id="img-btn" class="p-3 text-slate-400 hover:text-pink-400 hover:bg-white/5 rounded-full transition-all flex-shrink-0 relative group" title="Send Ephemeral Image">
+                        <i data-lucide="image" class="w-6 h-6 transform group-hover:scale-110 transition"></i>
+                        <span class="absolute -top-0.5 -right-0.5 flex h-3 w-3"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-pink-400 opacity-75"></span><span class="relative inline-flex rounded-full h-3 w-3 bg-pink-500"></span></span>
+                    </button>
 
-                        <!-- AI JUDGE -->
-                        <button id="menu-judge-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-purple-400 flex items-center gap-3 transition group">
-                            <div class="p-2 bg-purple-500/20 rounded-lg group-hover:bg-purple-500/30"><i data-lucide="gavel" class="w-4 h-4"></i></div>
-                            AI Aura Judge
-                        </button>
+                    <button type="button" id="emoji-btn" class="p-3 text-slate-400 hover:text-yellow-400 hover:bg-white/5 rounded-full transition-all flex-shrink-0 group">
+                        <i data-lucide="smile" class="w-6 h-6 transform group-hover:scale-110 transition"></i>
+                    </button>
 
-                        <!-- SOUND TOGGLE -->
-                        <button id="menu-sound-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-slate-200 flex items-center gap-3 transition group">
-                            <div id="menu-sound-icon" class="p-2 bg-white/5 rounded-lg group-hover:bg-white/10"><i data-lucide="volume-2" class="w-4 h-4"></i></div>
-                            <span id="menu-sound-text">Mute Sounds</span>
-                        </button>
-
-                        <div class="h-[1px] bg-white/10 mx-2 my-1"></div>
-
-                        <button id="hype-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-orange-400 flex items-center gap-3 transition group">
-                            <div class="p-2 bg-orange-500/20 rounded-lg group-hover:bg-orange-500/30"><i data-lucide="megaphone" class="w-4 h-4"></i></div>
-                            Hype It Up
-                        </button>
-
-                        <button id="theme-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-[var(--accent-1)] flex items-center gap-3 transition group">
-                            <div class="p-2 bg-white/5 rounded-lg group-hover:bg-white/10"><i data-lucide="palette" class="w-4 h-4"></i></div>
-                            Change Vibe
-                        </button>
-
-                        <button id="fav-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-slate-200 flex items-center gap-3 transition group">
-                            <div class="p-2 bg-white/5 rounded-lg group-hover:bg-white/10"><i data-lucide="heart" class="w-4 h-4"></i></div>
-                            Add to Favorites
-                        </button>
-
-                        <div class="h-[1px] bg-white/10 mx-2 my-1"></div>
-
-                        <button id="share-btn" class="w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold text-slate-200 flex items-center gap-3 transition group">
-                            <div class="p-2 bg-white/5 rounded-lg group-hover:bg-white/10"><i data-lucide="share-2" class="w-4 h-4"></i></div>
-                            Share Room
-                        </button>
-                    </div>
-                </div>
-            </div>
-        </header>
-
-        <main id="messages-container" class="flex-1 overflow-y-auto pt-24 pb-28 px-5 w-full scroll-smooth">
-            <div id="loading-spinner" class="flex flex-col items-center justify-center mt-40 gap-4 opacity-60">
-                <i data-lucide="loader-2" class="animate-spin w-10 h-10 text-[var(--accent-1)]"></i>
-                <span class="text-base font-medium fun-font opacity-80">Loading vibes...</span>
-            </div>
+                    <textarea id="message-input" rows="1" placeholder="Message or /commands..." 
+                        class="w-full bg-transparent border-none focus:ring-0 outline-none text-[15px] md:text-base text-white placeholder-slate-500 py-3.5 min-h-[48px] max-h-32 font-medium leading-relaxed custom-scrollbar"></textarea>
+                    
+                    <button type="submit" class="bg-gradient-btn hover:brightness-110 text-white p-3.5 rounded-full shadow-[0_4px_15px_rgba(0,0,0,0.3)] transition-all duration-200 flex items-center justify-center flex-shrink-0 mb-0.5 active:scale-90 group">
+                        <i data-lucide="arrow-up" class="w-5 h-5 md:w-6 md:h-6 transform group-hover:-translate-y-1 transition font-bold"></i>
+                    </button>
+                </form>
+            </footer>
         </main>
-
-        <button id="scroll-down-btn" class="hidden absolute bottom-28 right-6 z-20 w-12 h-12 bg-slate-900/90 backdrop-blur text-[var(--accent-1)] rounded-full shadow-xl border border-white/10 items-center justify-center hover:bg-slate-800 transition animate-bounce">
-            <i data-lucide="arrow-down" class="w-6 h-6"></i>
-        </button>
-
-        <div id="typing-indicator" class="hidden absolute bottom-28 left-6 z-20 flex items-center gap-3 bg-black/60 backdrop-blur px-5 py-2.5 rounded-full border border-white/10 shadow-xl transform transition-all duration-300 translate-y-2 opacity-0">
-             <div class="flex gap-1.5">
-                <div class="w-2 h-2 bg-[var(--accent-1)] rounded-full animate-bounce"></div>
-                <div class="w-2 h-2 bg-[var(--accent-2)] rounded-full animate-bounce delay-75"></div>
-                <div class="w-2 h-2 bg-white rounded-full animate-bounce delay-150"></div>
-            </div>
-            <span id="typing-text" class="text-xs font-bold uppercase tracking-wider opacity-90">Typing...</span>
-        </div>
-
-        <div id="emoji-picker" class="hidden absolute bottom-24 left-4 z-40 bg-slate-900/95 backdrop-blur border border-white/10 rounded-3xl shadow-2xl p-3 grid grid-cols-6 gap-2 w-80 max-h-72 overflow-y-auto"></div>
-
-        <!-- FOOTER -->
-        <footer class="absolute bottom-0 w-full glass-panel border-t border-white/5 p-3 px-4 z-30 pb-safe">
-            <div id="reply-preview" class="hidden flex justify-between items-center bg-white/5 backdrop-blur px-5 py-2.5 rounded-2xl border-l-4 border-[var(--accent-1)] mb-3 mx-1 shadow-lg">
-                <div class="overflow-hidden">
-                    <span class="text-xs font-bold text-[var(--accent-1)] uppercase tracking-wide">Replying to <span id="reply-to-user">User</span></span>
-                    <p id="reply-to-text" class="text-sm opacity-80 truncate mt-0.5 max-w-[280px]">...</p>
-                </div>
-                <button id="cancel-reply" class="p-2 rounded-full hover:bg-white/10 transition"><i data-lucide="x" class="w-5 h-5"></i></button>
-            </div>
-
-            <form id="message-form" class="flex gap-2 items-end bg-white/5 p-1.5 rounded-[1.5rem] border border-white/10 focus-within:border-[var(--accent-1)] focus-within:bg-black/40 transition-all duration-300 shadow-lg">
-                <input type="file" id="image-upload" accept="image/*" class="hidden">
-                <button type="button" id="img-btn" class="p-2.5 opacity-70 hover:opacity-100 hover:text-[var(--accent-2)] rounded-full transition-colors flex-shrink-0"><i data-lucide="image" class="w-6 h-6"></i></button>
-
-                <button type="button" id="emoji-btn" class="p-2.5 opacity-70 hover:opacity-100 hover:text-yellow-400 rounded-full transition-colors flex-shrink-0"><i data-lucide="smile" class="w-6 h-6"></i></button>
-
-                <!-- Optimized textarea for mobile -->
-                <textarea id="message-input" rows="1" placeholder="Do nonsense..." 
-                    class="w-full bg-transparent border-none focus:ring-0 outline-none text-base text-white placeholder-slate-500 py-2.5 min-h-[40px] max-h-36"></textarea>
-                
-                <button type="submit" class="bg-[var(--accent-2)] hover:opacity-90 text-white p-3 rounded-full shadow-lg transition-all duration-200 flex items-center justify-center flex-shrink-0 mb-0.5 active:scale-95"><i data-lucide="send-horizontal" class="w-5 h-5 ml-0.5"></i></button>
-            </form>
-        </footer>
     </div>
 
-    <!-- AI AURA REPORT MODAL -->
-    <div id="aura-modal" class="fixed inset-0 z-[60] hidden flex items-center justify-center p-6 bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-300 cursor-pointer">
-        <div class="bg-slate-900 w-full max-w-lg rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 cursor-default" id="aura-content-box" onclick="event.stopPropagation()">
-            <div class="ai-gradient p-8 text-center relative overflow-hidden">
-                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                <div class="relative z-10">
-                    <div class="bg-white/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-4 shadow-xl backdrop-blur-md border border-white/10">
-                        <i data-lucide="sparkles" class="w-10 h-10 text-white"></i>
+    <!-- AI AURA REPORT MODAL (DeepSeek Powered) -->
+    <div id="aura-modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 w-full max-w-xl rounded-[2.5rem] border border-white/10 shadow-[0_20px_60px_-15px_rgba(0,0,0,0.8)] overflow-hidden transform scale-95 transition-transform duration-300 relative">
+            <div class="absolute inset-0 bg-gradient-to-br from-purple-900/40 to-slate-900 pointer-events-none"></div>
+            
+            <div class="p-8 pb-6 text-center relative z-10 border-b border-white/5">
+                <div class="bg-purple-500/20 w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-[0_0_30px_rgba(168,85,247,0.4)] border border-purple-500/30">
+                    <i data-lucide="brain-circuit" class="w-10 h-10 text-purple-400"></i>
+                </div>
+                <h2 class="text-4xl font-black text-white tracking-wide fun-font text-shadow-md">DeepSeek Judge</h2>
+                <p class="text-purple-300 text-xs font-bold uppercase tracking-widest mt-2">Vibe Analysis Complete</p>
+                <button id="close-aura" class="absolute top-6 right-6 text-slate-400 hover:text-white hover:bg-white/10 rounded-full p-2 transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            
+            <div class="p-6 md:p-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-black/40 relative z-10" id="aura-result">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ABOUT/COMMANDS MODAL -->
+    <div id="about-modal" class="fixed inset-0 z-[80] hidden flex items-center justify-center p-4 bg-black/80 backdrop-blur-xl opacity-0 transition-opacity duration-300">
+        <div class="bg-slate-900 w-full max-w-lg rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300">
+            <div class="bg-gradient-to-r from-cyan-900/80 to-slate-900 p-8 text-center relative">
+                <h2 class="text-3xl font-black text-white tracking-wide fun-font">Chaos Manual</h2>
+                <p class="text-cyan-400 text-xs font-bold uppercase tracking-widest mt-2">Master the Faltu Art</p>
+                <button id="close-about" class="absolute top-6 right-6 text-slate-400 hover:text-white hover:bg-white/10 rounded-full p-2 transition"><i data-lucide="x" class="w-6 h-6"></i></button>
+            </div>
+            <div class="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-950/80 text-slate-300 space-y-8 text-sm">
+                
+                <div class="space-y-3">
+                    <h3 class="text-white font-bold text-lg flex items-center gap-2 uppercase tracking-wide"><i data-lucide="terminal" class="w-5 h-5 text-[var(--accent-1)]"></i> Slash Commands</h3>
+                    <div class="bg-black/50 p-5 rounded-2xl border border-white/5 space-y-4">
+                        <div class="flex items-start gap-3"><code class="bg-red-500/20 text-red-400 px-2 py-1 rounded font-mono text-xs whitespace-nowrap border border-red-500/30">/nuke</code> <span class="text-sm leading-tight text-slate-400">Clear chat visually with an explosion!</span></div>
+                        <div class="flex items-start gap-3"><code class="bg-cyan-500/20 text-cyan-400 px-2 py-1 rounded font-mono text-xs whitespace-nowrap border border-cyan-500/30">/poll Q? A,B</code> <span class="text-sm leading-tight text-slate-400">Create a real-time poll.</span></div>
+                        <div class="flex items-start gap-3"><code class="bg-pink-500/20 text-pink-400 px-2 py-1 rounded font-mono text-xs whitespace-nowrap border border-pink-500/30">/truth</code> <span class="text-sm leading-tight text-slate-400">Get a spicy truth question.</span></div>
+                        <div class="flex items-start gap-3"><code class="bg-yellow-500/20 text-yellow-400 px-2 py-1 rounded font-mono text-xs whitespace-nowrap border border-yellow-500/30">/dare</code> <span class="text-sm leading-tight text-slate-400">Get a chaotic dare.</span></div>
+                        <div class="flex items-start gap-3"><code class="bg-slate-700/50 text-slate-300 px-2 py-1 rounded font-mono text-xs whitespace-nowrap border border-slate-600">/anon Msg</code> <span class="text-sm leading-tight text-slate-400">Send an untraceable Ghost Whisper.</span></div>
                     </div>
-                    <h2 class="text-3xl font-bold text-white tracking-wide fun-font">Aura Report</h2>
-                    <p class="text-white/80 text-sm font-medium uppercase tracking-widest mt-2">Gemini AI Judge</p>
-                </div>
-                <button id="close-aura" class="absolute top-6 right-6 text-white hover:bg-black/20 rounded-full p-2 transition z-50"><i data-lucide="x" class="w-7 h-7"></i></button>
-            </div>
-            <div class="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-950 text-slate-200 space-y-5" id="aura-result"></div>
-            <div class="p-5 bg-black/30 border-t border-white/5 text-center"><p class="text-xs opacity-60">Powered by Gemini AI (Safe Mode)</p></div>
-        </div>
-    </div>
-
-    <!-- ABOUT FEATURES MODAL -->
-    <div id="about-modal" class="fixed inset-0 z-[70] hidden flex items-center justify-center p-6 bg-black/80 backdrop-blur-md opacity-0 transition-opacity duration-300 cursor-pointer">
-        <div class="bg-slate-900 w-full max-w-lg rounded-[2.5rem] border border-white/10 shadow-2xl overflow-hidden transform scale-95 transition-transform duration-300 cursor-default" id="about-content-box" onclick="event.stopPropagation()">
-            <div class="bg-gradient-to-r from-cyan-900 to-slate-900 p-8 text-center relative overflow-hidden">
-                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20"></div>
-                <div class="relative z-10">
-                    <h2 class="text-3xl font-bold text-white tracking-wide fun-font">Chaos Guide</h2>
-                    <p class="text-white/60 text-sm font-medium uppercase tracking-widest mt-2">Master the Faltu Art</p>
-                </div>
-                <button id="close-about" class="absolute top-6 right-6 text-white hover:bg-black/20 rounded-full p-2 transition z-50"><i data-lucide="x" class="w-7 h-7"></i></button>
-            </div>
-            <div class="p-8 max-h-[60vh] overflow-y-auto custom-scrollbar bg-slate-950 text-slate-300 space-y-6 text-sm">
-                
-                <div class="space-y-2">
-                    <h3 class="text-white font-bold text-lg flex items-center gap-2"><i data-lucide="terminal" class="w-5 h-5 text-[var(--accent-1)]"></i> Commands</h3>
-                    <ul class="space-y-3 bg-white/5 p-4 rounded-2xl border border-white/5">
-                        <li class="flex gap-3"><code class="bg-black/30 px-2 py-0.5 rounded text-[var(--accent-1)] font-mono whitespace-nowrap">/poll Q? A,B</code> <span>Create a poll</span></li>
-                        <li class="flex gap-3"><code class="bg-black/30 px-2 py-0.5 rounded text-pink-400 font-mono">/truth</code> <span>Get a spicy truth question</span></li>
-                        <li class="flex gap-3"><code class="bg-black/30 px-2 py-0.5 rounded text-blue-400 font-mono">/dare</code> <span>Get a crazy dare</span></li>
-                        <li class="flex gap-3"><code class="bg-black/30 px-2 py-0.5 rounded text-slate-400 font-mono">/anon Msg</code> <span>Send as Anonymous Ghost</span></li>
-                        <li class="flex gap-3"><code class="bg-black/30 px-2 py-0.5 rounded text-yellow-400 font-mono">/shrug</code> <span>¯\_(ツ)_/¯</span></li>
-                    </ul>
                 </div>
 
-                <div class="space-y-2">
-                    <h3 class="text-white font-bold text-lg flex items-center gap-2"><i data-lucide="sparkles" class="w-5 h-5 text-yellow-400"></i> Features</h3>
+                <div class="space-y-3">
+                    <h3 class="text-white font-bold text-lg flex items-center gap-2 uppercase tracking-wide"><i data-lucide="sparkles" class="w-5 h-5 text-yellow-400"></i> Pro Tips</h3>
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/5">
-                            <div class="text-white font-bold mb-1">🔥 Roast Me</div>
-                            <p class="text-xs opacity-70">Click the flame on your avatar for an ego check.</p>
+                        <div class="bg-black/50 p-4 rounded-2xl border border-white/5">
+                            <div class="text-[var(--accent-1)] font-bold mb-1 flex items-center gap-1.5"><i data-lucide="image" class="w-4 h-4"></i> Ephemeral Images</div>
+                            <p class="text-xs text-slate-400 leading-relaxed">Images burn away after 60s. Snap fast!</p>
                         </div>
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/5">
-                            <div class="text-white font-bold mb-1">⚖️ AI Judge</div>
-                            <p class="text-xs opacity-70">Let AI decide who is winning.</p>
-                        </div>
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/5">
-                            <div class="text-white font-bold mb-1">👻 Whisper</div>
-                            <p class="text-xs opacity-70">Use /anon to speak from the shadows.</p>
-                        </div>
-                        <div class="bg-white/5 p-3 rounded-xl border border-white/5">
-                            <div class="text-white font-bold mb-1">🏆 Rank Up</div>
-                            <p class="text-xs opacity-70">Chat more to go from Rookie to God.</p>
+                        <div class="bg-black/50 p-4 rounded-2xl border border-white/5">
+                            <div class="text-purple-400 font-bold mb-1 flex items-center gap-1.5"><i data-lucide="brain" class="w-4 h-4"></i> DeepSeek Judge</div>
+                            <p class="text-xs text-slate-400 leading-relaxed">AI reads the room and roasts the vibe.</p>
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
+    <!-- Audio Elements for Sounds & SFX -->
     <audio id="sfx-send" src="https://assets.mixkit.co/active_storage/sfx/2354/2354-preview.mp3" preload="auto"></audio>
     <audio id="sfx-receive" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3" preload="auto"></audio>
     <audio id="sfx-buzz" src="https://assets.mixkit.co/active_storage/sfx/214/214-preview.mp3" preload="auto"></audio>
     <audio id="sfx-poke" src="https://assets.mixkit.co/active_storage/sfx/2578/2578-preview.mp3" preload="auto"></audio>
     <audio id="sfx-mention" src="https://assets.mixkit.co/active_storage/sfx/2865/2865-preview.mp3" preload="auto"></audio>
+    
+    <!-- Custom SFX for Soundboard -->
+    <audio id="sfx-fart" src="https://assets.mixkit.co/active_storage/sfx/2350/2350-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-bruh" src="https://assets.mixkit.co/active_storage/sfx/2852/2852-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-magic" src="https://assets.mixkit.co/active_storage/sfx/2019/2019-preview.mp3" preload="auto"></audio>
+    <audio id="sfx-explosion" src="https://assets.mixkit.co/active_storage/sfx/1703/1703-preview.mp3" preload="auto"></audio>
 
-    <div id="toast" class="fixed top-24 left-1/2 -translate-x-1/2 bg-slate-800/90 backdrop-blur border border-white/10 text-white px-6 py-3 rounded-full shadow-2xl text-base font-bold opacity-0 transition-opacity duration-300 pointer-events-none z-[70] flex items-center gap-3">
-        <i data-lucide="check-circle" class="w-5 h-5 text-green-400"></i><span id="toast-msg">Action Successful</span>
+    <!-- Global Toast Notification -->
+    <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 bg-slate-800/95 backdrop-blur-xl border border-white/10 text-white px-6 py-3.5 rounded-full shadow-[0_10px_40px_rgba(0,0,0,0.5)] text-sm font-bold opacity-0 transition-all duration-300 pointer-events-none z-[100] flex items-center gap-3 transform -translate-y-4">
+        <i data-lucide="info" class="w-5 h-5 text-[var(--accent-1)]"></i><span id="toast-msg">Action Successful</span>
     </div>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where, deleteDoc, doc, serverTimestamp, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, orderBy, limit, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where, deleteDoc, doc, serverTimestamp, setDoc, updateDoc, arrayUnion, arrayRemove, getDoc, increment } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
-       const firebaseConfig = {
-  apiKey: "AIzaSyCODusPLmyjs75Hfhs6W7WrySLgFKByJS4",
-  authDomain: "faltu1-3b536.firebaseapp.com",
-  projectId: "faltu1-3b536",
-  storageBucket: "faltu1-3b536.firebasestorage.app",
-  messagingSenderId: "678126901086",
-  appId: "1:678126901086:web:d59dc0795fa6f94bc3e1cf"
+               const firebaseConfig = {
+  apiKey: "AIzaSyCcs-D8zLwtI6PF9BEO67sjoBDoMz4u538",
+  authDomain: "chatspace-e7292.firebaseapp.com",
+  projectId: "chatspace-e7292",
+  storageBucket: "chatspace-e7292.firebasestorage.app",
+  messagingSenderId: "1094778024528",
+  appId: "1:1094778024528:web:e00490109281ecd70d1755"
 };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        const _p1 = "sk-or-v1-e82c191638ad18338ef05090d9f51";
-        const _p2 = "ebd23ac31070d3776e9b3129cc4be4da60b";
-        const AI_KEY = _p1 + _p2;
+        // --- DEEPSEEK API CONFIGURATION via OpenRouter ---
+        // USER INSTRUCTION: Replace this placeholder with your actual OpenRouter API key that has access to DeepSeek.
+        const DEEPSEEK_API_KEY = "YOUR_OPENROUTER_API_KEY_HERE"; 
         const AI_URL = "https://openrouter.ai/api/v1/chat/completions";
+        const AI_MODEL = "deepseek/deepseek-chat"; // Uses DeepSeek V3
 
-        const FUNNY_ADJECTIVES = ['Spicy', 'Drunk', 'Lazy', 'Confused', 'Bored', 'Angry', 'Happy', 'Desi', 'Faltu', 'Crazy', 'Lost', 'Hungry'];
-        const FUNNY_NOUNS = ['Panda', 'Samosa', 'Ghost', 'Alien', 'Potato', 'Monkey', 'Uncle', 'Aunty', 'Don', 'Ninja', 'Cat', 'Dog'];
-        const KEYWORDS = {
-            'party': '🎉', 'nacho': '💃', 'dance': '🕺', 'yay': '🎊', 'love': '❤️', 'dil': '💖', 'lol': '😂', 'lmao': '🤣', 'fire': '🔥', 'aag': '🔥'
-        };
-        const THEMES = ['default', 'matrix', 'sunset'];
+        // Constants & Data
+        const FUNNY_ADJECTIVES = ['Spicy', 'Drunk', 'Lazy', 'Toxic', 'Based', 'Cringe', 'Goated', 'Sus', 'Faltu', 'Wild', 'Lost', 'Hungry'];
+        const FUNNY_NOUNS = ['Panda', 'Samosa', 'Ghost', 'Alien', 'Potato', 'Monke', 'Boomer', 'Zoomer', 'Chad', 'Ninja', 'Cat', 'Dog'];
+        const KEYWORDS = { 'party': '🎉', 'dance': '🕺', 'yay': '🎊', 'love': '❤️', 'lol': '😂', 'lmao': '🤣', 'fire': '🔥', 'bruh': '💀', 'sus': '👀' };
+        const THEMES = ['default', 'matrix', 'sunset', 'cyber'];
         const VIBES = ["Chaos Loading...", "No Logic, Just Vibes.", "Maximum Cringe Detected.", "Why are we here?", "Brainrot Central.", "Typing..."];
         const TRENDING_ROOMS = ["midnight-snacks", "exam-panic", "bakwaas-corner", "gaming-rage", "chai-pe-charcha"];
-        const FORTUNES = [
-            "You will eat a samosa today.", "Avoid people wearing yellow.", "Your wifi will be slow, brace yourself.", 
-            "Someone is thinking about you (it's the tax man).", "You will type something funny by mistake.", 
-            "Today is a good day to nap.", "Don't trust the auto-correct today."
-        ];
-        const ROASTS = [
-            "Your vibe is like a wet sock.", "You're the reason we have mute buttons.", "Even the AI is judging your username.",
-            "You have the charisma of a potato.", "Are you a glitch? Because you make no sense.", "Your chaos score is lower than my battery."
-        ];
-        const TRUTHS = [
-            "What's the most embarrassing music you listen to?", "Have you ever stalked someone on social media?", 
-            "What's the biggest lie you've ever told?", "Who is your secret crush?", 
-            "What's your worst habit?", "What's the last thing you Googled?"
-        ];
-        const DARES = [
-            "Send your 3rd recent emoji.", "Type with your nose for the next message.", 
-            "Change your name to 'Potato' for 5 mins.", "Describe your crush using only emojis.", 
-            "Send a voice note singing (if possible, else type lyrics)."
-        ];
+        const FORTUNES = ["You will eat a samosa today.", "Avoid people wearing yellow.", "Your wifi will be slow, brace yourself.", "Don't trust the auto-correct today.", "You are the main character today."];
+        const ROASTS = ["Your vibe is like a wet sock.", "Even the AI is judging your username.", "You have the charisma of a potato.", "Are you a glitch? Because you make no sense."];
+        const TRUTHS = ["What's the most embarrassing music you listen to?", "Have you ever stalked someone on social media?", "What's the biggest lie you've ever told?", "Who is your secret crush?"];
+        const DARES = ["Send your 3rd recent emoji.", "Type with your nose for the next message.", "Change your name to 'Potato' for 5 mins.", "Describe your crush using only emojis."];
 
         const getDeviceId = () => {
             let id = localStorage.getItem('chat_device_id');
@@ -481,72 +552,82 @@
             screens: { login: document.getElementById('login-screen'), chat: document.getElementById('chat-screen') },
             forms: { login: document.getElementById('login-form'), msg: document.getElementById('message-form') },
             inputs: { room: document.getElementById('room-input'), user: document.getElementById('username-input'), msg: document.getElementById('message-input'), img: document.getElementById('image-upload') },
-            display: { room: document.getElementById('room-display-name'), online: document.getElementById('online-count'), list: document.getElementById('messages-container'), vibe: document.getElementById('daily-vibe'), trends: document.getElementById('trending-rooms'), fortune: document.getElementById('fortune-text') },
+            display: { 
+                list: document.getElementById('messages-container'), vibe: document.getElementById('daily-vibe'), trends: document.getElementById('trending-rooms'), fortune: document.getElementById('fortune-text'),
+                homeFavs: document.getElementById('home-fav-rooms'), homeFavSection: document.getElementById('home-fav-section'),
+                mobile: { room: document.getElementById('mobile-room-name'), online: document.getElementById('mobile-online-count') },
+                sidebar: { room: document.getElementById('sidebar-room-name'), onlineCount: document.getElementById('sidebar-online-count'), onlineList: document.getElementById('sidebar-online-list'), user: document.getElementById('sidebar-username'), avatar: document.getElementById('sidebar-avatar'), score: document.getElementById('sidebar-score'), favs: document.getElementById('sidebar-fav-list') }
+            },
             reply: { box: document.getElementById('reply-preview'), user: document.getElementById('reply-to-user'), text: document.getElementById('reply-to-text'), cancel: document.getElementById('cancel-reply') },
             typing: { box: document.getElementById('typing-indicator'), text: document.getElementById('typing-text') },
             loading: document.getElementById('loading-spinner'),
-            audio: { send: document.getElementById('sfx-send'), receive: document.getElementById('sfx-receive'), buzz: document.getElementById('sfx-buzz'), poke: document.getElementById('sfx-poke'), mention: document.getElementById('sfx-mention') },
-            btns: { logout: document.getElementById('logout-btn'), emoji: document.getElementById('emoji-btn'), img: document.getElementById('img-btn'), fav: document.getElementById('fav-btn'), share: document.getElementById('share-btn'), scroll: document.getElementById('scroll-down-btn'), buzz: document.getElementById('buzz-btn'), judge: document.getElementById('menu-judge-btn'), randName: document.getElementById('random-name-btn'), theme: document.getElementById('theme-btn'), hype: document.getElementById('hype-btn'), menu: document.getElementById('menu-btn'), sound: document.getElementById('menu-sound-btn'), roast: document.getElementById('roast-btn'), about: document.getElementById('about-btn') },
-            menu: document.getElementById('dropdown-menu'),
-            emojiPicker: document.getElementById('emoji-picker'),
-            favList: document.getElementById('favorites-list'),
-            favSection: document.getElementById('favorites-section'),
-            toast: document.getElementById('toast'), toastMsg: document.getElementById('toast-msg'),
-            modal: { box: document.getElementById('aura-modal'), content: document.getElementById('aura-result'), close: document.getElementById('close-aura'), card: document.getElementById('aura-content-box') },
+            audio: { send: document.getElementById('sfx-send'), receive: document.getElementById('sfx-receive'), buzz: document.getElementById('sfx-buzz'), poke: document.getElementById('sfx-poke'), mention: document.getElementById('sfx-mention'), fart: document.getElementById('sfx-fart'), bruh: document.getElementById('sfx-bruh'), magic: document.getElementById('sfx-magic'), nuke: document.getElementById('sfx-explosion') },
+            btns: { mobileBack: document.getElementById('mobile-back-btn'), sidebarLogout: document.getElementById('sidebar-logout-btn'), emoji: document.getElementById('emoji-btn'), img: document.getElementById('img-btn'), fav: document.getElementById('fav-btn'), share: document.getElementById('share-btn'), scroll: document.getElementById('scroll-down-btn'), buzzMobile: document.getElementById('mobile-buzz-btn'), buzzSidebar: document.getElementById('sidebar-buzz-btn'), judgeMobile: document.getElementById('mobile-judge-btn'), judgeSidebar: document.getElementById('sidebar-judge-btn'), randName: document.getElementById('random-name-btn'), theme: document.getElementById('sidebar-theme-btn'), themeMobile: document.getElementById('mobile-theme-btn'), menu: document.getElementById('menu-btn'), sound: document.getElementById('menu-sound-btn'), roast: document.getElementById('roast-btn'), about: document.getElementById('about-btn'),
+                sfxFart: document.getElementById('sfx-fart-btn'), sfxBruh: document.getElementById('sfx-bruh-btn'), sfxMagic: document.getElementById('sfx-magic-btn')
+            },
+            menu: document.getElementById('dropdown-menu'), emojiPicker: document.getElementById('emoji-picker'), toast: document.getElementById('toast'), toastMsg: document.getElementById('toast-msg'), nukeOverlay: document.getElementById('nuke-overlay'),
+            modal: { box: document.getElementById('aura-modal'), content: document.getElementById('aura-result'), close: document.getElementById('close-aura') },
             about: { box: document.getElementById('about-modal'), close: document.getElementById('close-about') },
-            loginAvatar: { img: document.getElementById('login-avatar-preview') },
+            loginAvatar: document.getElementById('login-avatar-preview'),
             stats: { score: document.getElementById('user-score'), rank: document.getElementById('user-rank'), progress: document.getElementById('rank-progress'), global: document.getElementById('global-counter') },
-            menuSoundIcon: document.getElementById('menu-sound-icon'),
-            menuSoundText: document.getElementById('menu-sound-text')
+            menuSoundIcon: document.getElementById('menu-sound-icon'), menuSoundText: document.getElementById('menu-sound-text')
         };
 
         lucide.createIcons();
-        renderFavorites();
         checkUrlParams();
         initLoginScreen();
 
         function initLoginScreen() {
-            // Random Vibe & Fortune
             els.display.vibe.textContent = VIBES[Math.floor(Math.random() * VIBES.length)];
             els.display.fortune.textContent = FORTUNES[Math.floor(Math.random() * FORTUNES.length)];
             
-            // Trending Rooms
             els.display.trends.innerHTML = '';
-            TRENDING_ROOMS.sort(() => 0.5 - Math.random()).slice(0, 3).forEach(room => {
+            TRENDING_ROOMS.sort(() => 0.5 - Math.random()).slice(0, 4).forEach(room => {
                 const tag = document.createElement('span');
-                tag.className = "bg-white/5 border border-white/10 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-300 cursor-pointer hover:bg-white/10 hover:text-[var(--accent-1)] transition whitespace-nowrap";
-                tag.textContent = `#${room}`;
-                tag.onclick = () => { els.inputs.room.value = room; els.inputs.user.focus(); };
+                tag.className = "bg-white/10 border border-white/20 px-3 py-1.5 rounded-xl text-[10px] md:text-xs font-bold text-slate-200 cursor-pointer hover:bg-white/20 hover:text-[var(--accent-1)] transition shadow-sm active:scale-95";
+                tag.textContent = `#${room}`; tag.onclick = () => { els.inputs.room.value = room; els.inputs.user.focus(); };
                 els.display.trends.appendChild(tag);
             });
 
-            // Stats Update
             updateHomeStats();
+            renderHomeFavs();
             
-            // Global Counter Logic
             const statsRef = doc(db, 'stats', 'global');
-            // Optimistic update for visual
-            updateDoc(statsRef, { visits: increment(1) }).catch(err => {
-                setDoc(statsRef, { visits: 1 }, { merge: true }).catch(()=>{});
-            });
-
-            onSnapshot(statsRef, (doc) => {
-                if (doc.exists()) {
-                    els.stats.global.textContent = doc.data().visits.toLocaleString();
-                } else {
-                    els.stats.global.textContent = "1,337"; 
-                }
-            });
+            updateDoc(statsRef, { visits: increment(1) }).catch(() => setDoc(statsRef, { visits: 1 }, { merge: true }).catch(()=>{}));
+            onSnapshot(statsRef, (doc) => { if (doc.exists()) els.stats.global.textContent = doc.data().visits.toLocaleString(); else els.stats.global.textContent = "1,337"; });
         }
 
-        // --- NEW FEATURES: ROAST ---
+        function renderHomeFavs() {
+            if(state.favorites.length === 0) {
+                els.display.homeFavSection.classList.add('hidden');
+                return;
+            }
+            els.display.homeFavSection.classList.remove('hidden');
+            els.display.homeFavs.innerHTML = '';
+            state.favorites.forEach(room => {
+                const btn = document.createElement('button');
+                btn.type = "button";
+                btn.className = "px-4 py-2 bg-gradient-to-br from-[var(--accent-1)]/20 to-transparent border border-[var(--accent-1)]/30 hover:border-[var(--accent-1)] rounded-xl text-[var(--accent-1)] text-[11px] font-black uppercase tracking-widest transition shadow-sm flex items-center gap-1.5 active:scale-95";
+                btn.innerHTML = `<i data-lucide="hash" class="w-3 h-3"></i> ${room}`;
+                btn.onclick = () => { 
+                    els.inputs.room.value = room; 
+                    if(els.inputs.user.value.trim() !== '') {
+                        joinRoom(room, els.inputs.user.value.trim());
+                    } else {
+                        els.inputs.user.focus();
+                    }
+                };
+                els.display.homeFavs.appendChild(btn);
+            });
+            lucide.createIcons();
+        }
+
         els.btns.roast.addEventListener('click', (e) => {
             e.preventDefault();
             const roast = ROASTS[Math.floor(Math.random() * ROASTS.length)];
-            alert(`🔥 ROAST INCOMING:\n\n"${roast}"`);
+            showToast(`🔥 ${roast}`);
         });
 
-        // --- NEW GAMIFICATION SYSTEM ---
         function getRankInfo(score) {
             if (score < 100) return { title: "Rookie Yapper", next: 100, prev: 0 };
             if (score < 500) return { title: "Casual Chatter", next: 500, prev: 100 };
@@ -556,208 +637,166 @@
         }
 
         function updateChaosScore(amount) {
-            state.chaosScore += amount;
-            localStorage.setItem('faltu_chaos_score', state.chaosScore);
+            state.chaosScore += amount; localStorage.setItem('faltu_chaos_score', state.chaosScore);
             updateHomeStats();
         }
 
         function updateHomeStats() {
             const info = getRankInfo(state.chaosScore);
-            els.stats.score.textContent = state.chaosScore;
-            els.stats.rank.textContent = info.title;
-            
-            const total = info.next - info.prev;
-            const current = state.chaosScore - info.prev;
-            const pct = Math.min(100, Math.max(0, (current / total) * 100));
-            
+            els.stats.score.textContent = state.chaosScore; els.stats.rank.textContent = info.title;
+            const pct = Math.min(100, Math.max(0, ((state.chaosScore - info.prev) / (info.next - info.prev)) * 100));
             els.stats.progress.style.width = `${pct}%`;
+            els.display.sidebar.score.textContent = state.chaosScore;
         }
 
-        // --- AVATAR PREVIEW IN LOGIN ---
-        function updateLoginAvatar() {
-            const name = els.inputs.user.value.trim() || 'Faltu';
-            const url = `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(name)}`;
-            els.loginAvatar.img.src = url;
-        }
+        function getAvatarUrl(name) { return `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(name||'Faltu')}`; }
+        function updateLoginAvatar() { els.loginAvatar.src = getAvatarUrl(els.inputs.user.value.trim()); }
         els.inputs.user.addEventListener('input', updateLoginAvatar);
 
-        // --- SOUND TOGGLE ---
+        // Sound Management
         els.btns.sound.addEventListener('click', () => {
             state.muted = !state.muted;
-            if (state.muted) {
-                els.menuSoundIcon.innerHTML = '<i data-lucide="volume-x" class="w-4 h-4 text-red-400"></i>';
-                els.menuSoundText.textContent = "Unmute Sounds";
-            } else {
-                els.menuSoundIcon.innerHTML = '<i data-lucide="volume-2" class="w-4 h-4"></i>';
-                els.menuSoundText.textContent = "Mute Sounds";
-            }
-            lucide.createIcons();
-            showToast(state.muted ? "Muted" : "Sound On");
+            if (state.muted) { els.menuSoundIcon.innerHTML = '<i data-lucide="volume-x" class="w-4 h-4 text-red-400"></i>'; els.menuSoundText.textContent = "Unmute Sounds"; } 
+            else { els.menuSoundIcon.innerHTML = '<i data-lucide="volume-2" class="w-4 h-4"></i>'; els.menuSoundText.textContent = "Mute App Sounds"; }
+            lucide.createIcons(); showToast(state.muted ? "App Muted" : "Sound On");
         });
+        function playSound(audioEl) { if(!state.muted && audioEl) { audioEl.currentTime = 0; audioEl.play().catch(()=>{}); } }
 
-        function playSound(audioEl) {
-            if(!state.muted && audioEl) {
-                audioEl.currentTime = 0;
-                audioEl.play().catch(()=>{});
-            }
-        }
-
-        // --- POLL SYSTEM ---
+        // Poll & Interaction globals
         window.votePoll = async (msgId, optIdx, votersStr) => {
             const voters = JSON.parse(decodeURIComponent(votersStr));
             if(voters.includes(state.uid)) { showToast("Already Voted!"); return; }
-            
-            const msgRef = doc(db, 'messages', msgId);
             try {
-                const snap = await getDoc(msgRef);
-                if(snap.exists()) {
-                    const data = snap.data();
-                    if(data.type === 'poll') {
-                        const newOptions = [...data.poll.options];
-                        newOptions[optIdx].votes.push(state.uid);
-                        await updateDoc(msgRef, { 'poll.options': newOptions });
-                        showToast("Vote Recorded!");
-                    }
+                const snap = await getDoc(doc(db, 'messages', msgId));
+                if(snap.exists() && snap.data().type === 'poll') {
+                    const newOptions = [...snap.data().poll.options];
+                    newOptions[optIdx].votes.push(state.uid);
+                    await updateDoc(doc(db, 'messages', msgId), { 'poll.options': newOptions }); showToast("Vote Recorded!");
                 }
             } catch(e) { console.error(e); }
         };
+        window.toggleLike = async (id, likes = []) => {
+            const ref = doc(db, "messages", id);
+            if (likes.includes(state.uid)) await updateDoc(ref, { likes: arrayRemove(state.uid) });
+            else await updateDoc(ref, { likes: arrayUnion(state.uid) });
+        };
+        window.pokeUser = async (targetName) => { sendMessage({ type: 'poke', target: targetName, text: `👉 Poked ${targetName}` }); };
+        window.reply = (id, user, text) => { state.reply = { id, user, text }; els.reply.user.textContent = user; els.reply.text.textContent = text; els.reply.box.classList.remove('hidden'); els.reply.box.classList.add('flex'); els.inputs.msg.focus(); };
 
-        // --- ABOUT MODAL LISTENERS ---
-        els.btns.about.addEventListener('click', (e) => { 
-            e.stopPropagation(); 
-            els.menu.classList.add('hidden'); // Close menu
-            els.about.box.classList.remove('hidden'); 
-            setTimeout(()=>els.about.box.classList.remove('opacity-0'),10); 
-        });
-        els.about.close.addEventListener('click', (e) => { e.stopPropagation(); closeAbout(); });
-        els.about.box.addEventListener('click', (e) => { if(e.target===els.about.box) closeAbout(); });
-        function closeAbout() { els.about.box.classList.add('opacity-0'); setTimeout(()=>els.about.box.classList.add('hidden'),300); }
+        // Modals & UI Events
+        const openModal = (modal) => { els.menu.classList.add('hidden'); modal.box.classList.remove('hidden'); setTimeout(()=>modal.box.classList.remove('opacity-0'),10); };
+        const closeModal = (modal) => { modal.box.classList.add('opacity-0'); setTimeout(()=>modal.box.classList.add('hidden'),300); };
+        
+        els.btns.about.addEventListener('click', (e) => { e.stopPropagation(); openModal(els.about); });
+        els.about.close.addEventListener('click', (e) => { e.stopPropagation(); closeModal(els.about); });
+        els.btns.judgeMobile.addEventListener('click', () => openJudgeModal());
+        els.btns.judgeSidebar.addEventListener('click', () => openJudgeModal());
+        els.modal.close.addEventListener('click', (e) => { e.stopPropagation(); closeModal(els.modal); });
+        
+        els.btns.menu.addEventListener('click', (e) => { e.stopPropagation(); els.menu.classList.toggle('hidden'); els.menu.classList.toggle('scale-95'); els.menu.classList.toggle('opacity-0'); });
+        document.addEventListener('click', (e) => { if (!els.menu.contains(e.target) && e.target !== els.btns.menu) { els.menu.classList.add('hidden', 'scale-95', 'opacity-0'); } });
 
-        // --- EXISTING LISTENERS ---
-
-        els.btns.menu.addEventListener('click', (e) => {
-            e.stopPropagation();
-            els.menu.classList.toggle('hidden');
-        });
-        document.addEventListener('click', (e) => {
-            if (!els.menu.contains(e.target) && e.target !== els.btns.menu) els.menu.classList.add('hidden');
-        });
-
-        els.btns.theme.addEventListener('click', () => {
+        // Theme Switch Logic
+        const triggerThemeSwitch = () => {
             state.themeIdx = (state.themeIdx + 1) % THEMES.length;
             document.body.className = `bg-slate-950 text-slate-100 theme-${THEMES[state.themeIdx]}`;
             showToast(`Vibe Switch: ${THEMES[state.themeIdx].toUpperCase()}`);
-        });
-
-        els.btns.randName.addEventListener('click', () => {
-            els.inputs.user.value = `${FUNNY_ADJECTIVES[Math.floor(Math.random() * FUNNY_ADJECTIVES.length)]} ${FUNNY_NOUNS[Math.floor(Math.random() * FUNNY_NOUNS.length)]}`;
-            updateLoginAvatar(); 
-        });
-
-        els.btns.buzz.addEventListener('click', async () => {
-            if(!state.room) return;
-            els.btns.buzz.disabled = true; els.btns.buzz.classList.add('opacity-50');
-            setTimeout(() => { els.btns.buzz.disabled = false; els.btns.buzz.classList.remove('opacity-50'); }, 3000);
-            sendMessage({ type: 'buzz', text: '⚡ BUZZED THE ROOM!' });
-        });
-
-        els.btns.hype.addEventListener('click', async () => {
-            if(!state.room) return;
-            sendMessage({ type: 'hype', text: '🎉 HYPE! HYPE! HYPE!' });
-        });
-
-        function triggerShake() {
-            els.body.classList.add('shake-hard');
-            playSound(els.audio.buzz);
-            setTimeout(() => els.body.classList.remove('shake-hard'), 600);
+        };
+        els.btns.theme.addEventListener('click', triggerThemeSwitch);
+        if (els.btns.themeMobile) {
+            els.btns.themeMobile.addEventListener('click', () => {
+                els.menu.classList.add('hidden', 'scale-95', 'opacity-0');
+                triggerThemeSwitch();
+            });
         }
 
+        els.btns.randName.addEventListener('click', () => { els.inputs.user.value = `${FUNNY_ADJECTIVES[Math.floor(Math.random() * FUNNY_ADJECTIVES.length)]} ${FUNNY_NOUNS[Math.floor(Math.random() * FUNNY_NOUNS.length)]}`; updateLoginAvatar(); });
+
+        const triggerBuzz = async () => { if(!state.room) return; sendMessage({ type: 'buzz', text: '⚡ BUZZED THE ROOM!' }); showToast("Room Buzzed!"); };
+        els.btns.buzzMobile.addEventListener('click', triggerBuzz); els.btns.buzzSidebar.addEventListener('click', triggerBuzz);
+
+        // Soundboard Triggers
+        els.btns.sfxFart.addEventListener('click', () => { sendMessage({ type: 'sfx', sound: 'fart', text: '💨 *Farted loudly*' }); els.menu.classList.add('hidden'); });
+        els.btns.sfxBruh.addEventListener('click', () => { sendMessage({ type: 'sfx', sound: 'bruh', text: '💀 *Bruh...*' }); els.menu.classList.add('hidden'); });
+        els.btns.sfxMagic.addEventListener('click', () => { sendMessage({ type: 'sfx', sound: 'magic', text: '✨ *Magic happens*' }); els.menu.classList.add('hidden'); });
+
+        function triggerShake() { els.body.classList.add('shake-hard'); playSound(els.audio.buzz); setTimeout(() => els.body.classList.remove('shake-hard'), 600); }
         function triggerEmojiRain(emojiChar) {
-            for(let i=0; i<20; i++) {
-                const el = document.createElement('div');
-                el.textContent = emojiChar; el.className = 'emoji-particle';
-                el.style.left = Math.random() * 100 + 'vw';
-                el.style.animationDuration = (Math.random() * 2 + 1) + 's';
-                el.style.opacity = Math.random();
-                document.body.appendChild(el);
-                setTimeout(() => el.remove(), 3000);
+            for(let i=0; i<25; i++) {
+                const el = document.createElement('div'); el.textContent = emojiChar; el.className = 'emoji-particle';
+                el.style.left = Math.random() * 100 + 'vw'; el.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                document.body.appendChild(el); setTimeout(() => el.remove(), 3500);
             }
+        }
+        function triggerNuke() {
+            playSound(els.audio.nuke);
+            els.nukeOverlay.classList.remove('hidden'); els.nukeOverlay.classList.add('nuke-flash');
+            triggerShake();
+            setTimeout(() => { els.display.list.innerHTML = `<div class="flex flex-col items-center justify-center mt-40 opacity-50"><div class="bg-red-500/10 p-6 rounded-[2rem] mb-4 shadow-xl"><i data-lucide="bomb" class="w-14 h-14 text-red-500"></i></div><p class="text-lg text-slate-400 fun-font font-medium">Chat Nuked locally 💥</p></div>`; lucide.createIcons(); }, 750);
+            setTimeout(() => { els.nukeOverlay.classList.add('hidden'); els.nukeOverlay.classList.remove('nuke-flash'); }, 1500);
         }
 
-        function checkForKeywords(text) {
-            const lower = text.toLowerCase();
-            for (const [key, emoji] of Object.entries(KEYWORDS)) {
-                if (lower.includes(key)) { triggerEmojiRain(emoji); return; }
-            }
-        }
+        function checkForKeywords(text) { const lower = text.toLowerCase(); for (const [key, emoji] of Object.entries(KEYWORDS)) { if (lower.includes(key)) { triggerEmojiRain(emoji); return; } } }
 
         function checkUrlParams() {
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.get('room')) {
                 els.inputs.room.value = urlParams.get('room');
-                if(localStorage.getItem('faltu_username')) {
-                    els.inputs.user.value = localStorage.getItem('faltu_username');
-                    updateLoginAvatar();
-                }
+                if(localStorage.getItem('faltu_username')) { els.inputs.user.value = localStorage.getItem('faltu_username'); updateLoginAvatar(); }
             }
         }
 
-        function renderFavorites() {
-            els.favList.innerHTML = '';
-            if (state.favorites.length > 0) {
-                els.favSection.classList.remove('hidden');
-                state.favorites.forEach(room => {
-                    const btn = document.createElement('button');
-                    btn.className = "px-6 py-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl text-slate-200 text-sm font-bold uppercase tracking-wide transition active:scale-95 flex items-center gap-2 shadow-lg";
-                    btn.innerHTML = `<i data-lucide="zap" class="w-4 h-4 text-[var(--accent-1)]"></i> ${room}`;
-                    btn.onclick = () => { els.inputs.room.value = room; els.inputs.user.focus(); };
-                    els.favList.appendChild(btn);
-                });
-                lucide.createIcons();
-            } else els.favSection.classList.add('hidden');
+        function showToast(msg) {
+            els.toastMsg.textContent = msg; els.toast.classList.remove('opacity-0', '-translate-y-4');
+            setTimeout(() => els.toast.classList.add('opacity-0', '-translate-y-4'), 2500);
         }
 
-        function showToast(msg) {
-            els.toastMsg.textContent = msg;
-            els.toast.classList.remove('opacity-0', 'translate-y-2'); els.toast.classList.add('opacity-100', 'translate-y-0');
-            setTimeout(() => { els.toast.classList.add('opacity-0', 'translate-y-2'); els.toast.classList.remove('opacity-100', 'translate-y-0'); }, 2000);
+        function renderSidebarFavs() {
+            els.display.sidebar.favs.innerHTML = '';
+            if(state.favorites.length === 0) { els.display.sidebar.favs.innerHTML = '<span class="text-[10px] text-slate-500 italic">No favorites yet.</span>'; return; }
+            state.favorites.forEach(room => {
+                const btn = document.createElement('button');
+                btn.className = "px-3 py-1.5 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-slate-300 text-xs font-bold uppercase tracking-wide transition shadow-sm flex items-center gap-1.5 active:scale-95";
+                btn.innerHTML = `<i data-lucide="hash" class="w-3 h-3 text-[var(--accent-2)]"></i> ${room}`;
+                btn.onclick = () => { if(state.room !== room) joinRoom(room, state.user); };
+                els.display.sidebar.favs.appendChild(btn);
+            });
+            lucide.createIcons();
         }
 
         els.btns.fav.addEventListener('click', () => {
+            els.menu.classList.add('hidden');
             const index = state.favorites.indexOf(state.room);
-            if (index === -1) {
-                state.favorites.push(state.room);
-                els.btns.fav.classList.add('like-bounce');
-                setTimeout(() => els.btns.fav.classList.remove('like-bounce'), 400);
-                showToast("Added to Favorites");
-            } else { state.favorites.splice(index, 1); showToast("Removed from Favorites"); }
-            localStorage.setItem('faltu_favs', JSON.stringify(state.favorites));
+            if (index === -1) { state.favorites.push(state.room); showToast("Added to Favorites ❤️"); } 
+            else { state.favorites.splice(index, 1); showToast("Removed from Favorites 💔"); }
+            localStorage.setItem('faltu_favs', JSON.stringify(state.favorites)); 
+            renderSidebarFavs(); 
+            renderHomeFavs(); 
             updateFavIcon();
         });
 
         els.btns.share.addEventListener('click', () => {
-            const url = new URL(window.location.href); url.searchParams.set('room', state.room);
-            navigator.clipboard.writeText(url.toString()).then(() => showToast("Link Copied!"));
+            els.menu.classList.add('hidden'); const url = new URL(window.location.href); url.searchParams.set('room', state.room);
+            navigator.clipboard.writeText(url.toString()).then(() => showToast("Link Copied! 📋"));
         });
 
         function updateFavIcon() {
             const isFav = state.favorites.includes(state.room);
-            const iconClass = isFav ? "w-4 h-4 text-pink-500 fill-pink-500" : "w-4 h-4";
-            const text = isFav ? "Favorited" : "Add to Favorites";
-            const textColor = isFav ? "text-pink-500" : "text-slate-200";
-            
-            els.btns.fav.className = `w-full text-left px-4 py-3.5 rounded-xl hover:bg-white/10 text-sm font-bold ${textColor} flex items-center gap-3 transition group`;
-            els.btns.fav.innerHTML = `<div class="p-2 bg-white/5 rounded-lg group-hover:bg-white/10"><i data-lucide="heart" class="${iconClass}"></i></div>${text}`;
+            els.btns.fav.innerHTML = `<div class="p-1.5 ${isFav ? 'bg-pink-500/20' : 'bg-white/5'} rounded-lg"><i data-lucide="heart" class="w-4 h-4 ${isFav ? 'text-pink-500 fill-pink-500' : ''}"></i></div> ${isFav ? 'Remove Favorite' : 'Favorite Room'}`;
             lucide.createIcons();
         }
 
+        let isUserScrolling = false;
         els.display.list.addEventListener('scroll', () => {
             const diff = els.display.list.scrollHeight - els.display.list.scrollTop - els.display.list.clientHeight;
             if (diff > 100) { state.autoScroll = false; els.btns.scroll.classList.remove('hidden'); els.btns.scroll.classList.add('flex'); } 
             else { state.autoScroll = true; els.btns.scroll.classList.add('hidden'); els.btns.scroll.classList.remove('flex'); }
         });
-        els.btns.scroll.addEventListener('click', () => { state.autoScroll = true; els.display.list.scrollTop = els.display.list.scrollHeight; });
+        els.btns.scroll.addEventListener('click', () => { state.autoScroll = true; smoothScrollToBottom(); });
 
+        function smoothScrollToBottom() { requestAnimationFrame(() => { els.display.list.scrollTo({ top: els.display.list.scrollHeight, behavior: 'smooth' }); }); }
+
+        // Image Upload (Canvas Compression)
         els.btns.img.addEventListener('click', () => els.inputs.img.click());
         els.inputs.img.addEventListener('change', async (e) => {
             const file = e.target.files[0]; if (!file) return;
@@ -769,21 +808,21 @@
                     const MAX_SIZE = 600; let w = img.width, h = img.height;
                     if (w > h) { if (w > MAX_SIZE) { h *= MAX_SIZE / w; w = MAX_SIZE; } } else { if (h > MAX_SIZE) { w *= MAX_SIZE / h; h = MAX_SIZE; } }
                     canvas.width = w; canvas.height = h; ctx.drawImage(img, 0, 0, w, h);
-                    sendMessage({ image: canvas.toDataURL('image/jpeg', 0.7), text: "📷 Flash Image" });
+                    sendMessage({ image: canvas.toDataURL('image/jpeg', 0.7), text: "📷 Snapped an image!" });
                 };
-            };
-            els.inputs.img.value = '';
+            }; els.inputs.img.value = '';
         });
 
-        const emojis = ["😂","😭","💀","🤡","🔥","❤️","👀","🫡","🫠","🗿","✨","🚩","💩","🤢","🍺","🍻","😴","😎","🌚","🌝","🙏","🤌","💪","🎉"];
+        // Emoji Picker logic
+        const emojis = ["😂","😭","💀","🤡","🔥","❤️","👀","🫡","🫠","🗿","✨","🚩","💩","🍻","😴","😎","🌚","🙏","🤌","💪","🎉"];
         emojis.forEach(emoji => {
             const btn = document.createElement('button'); btn.textContent = emoji;
-            btn.className = "text-3xl hover:bg-white/10 p-3 rounded-2xl transition active:scale-90";
-            btn.onclick = () => { els.inputs.msg.value += emoji; els.inputs.msg.focus(); };
+            btn.className = "text-3xl hover:bg-white/10 p-2 rounded-xl transition transform active:scale-75 select-none";
+            btn.onclick = () => { els.inputs.msg.value += emoji; els.inputs.msg.focus(); els.emojiPicker.classList.add('hidden'); };
             els.emojiPicker.appendChild(btn);
         });
-        els.btns.emoji.addEventListener('click', (e) => { e.stopPropagation(); els.emojiPicker.classList.toggle('hidden'); });
-        document.addEventListener('click', (e) => { if (!els.emojiPicker.contains(e.target) && e.target !== els.btns.emoji) els.emojiPicker.classList.add('hidden'); });
+        els.btns.emoji.addEventListener('click', (e) => { e.stopPropagation(); els.emojiPicker.classList.toggle('hidden'); els.emojiPicker.classList.toggle('scale-95'); els.emojiPicker.classList.toggle('opacity-0'); });
+        document.addEventListener('click', (e) => { if (!els.emojiPicker.contains(e.target) && e.target !== els.btns.emoji) els.emojiPicker.classList.add('hidden', 'scale-95', 'opacity-0'); });
 
         els.forms.login.addEventListener('submit', (e) => {
             e.preventDefault();
@@ -795,41 +834,54 @@
         function joinRoom(room, user) {
             state.room = room; state.user = user;
             localStorage.setItem('faltu_username', user);
-            els.display.room.textContent = room;
             
-            updateFavIcon();
+            // Update UI Elements
+            els.display.mobile.room.textContent = room;
+            els.display.sidebar.room.textContent = '#' + room;
+            els.display.sidebar.user.textContent = user;
+            els.display.sidebar.avatar.src = getAvatarUrl(user);
+            updateFavIcon(); renderSidebarFavs();
             
             els.screens.login.classList.add('hidden');
             els.screens.chat.classList.remove('hidden');
-            els.screens.chat.classList.add('flex');
             const url = new URL(window.location); url.searchParams.set('room', room); window.history.pushState({}, '', url);
+            
+            if(msgUnsub) msgUnsub(); if(typingUnsub) typingUnsub(); if(presenceInterval) clearInterval(presenceInterval); if(presenceUnsub) presenceUnsub();
+            els.display.list.innerHTML = `<div id="loading-spinner" class="flex flex-col items-center justify-center h-full gap-4 opacity-60"><i data-lucide="loader-2" class="animate-spin w-12 h-12 text-[var(--accent-1)]"></i><span class="text-lg font-medium fun-font opacity-80 tracking-widest">CONNECTING...</span></div>`;
+            lucide.createIcons();
+            
             subscribeToMessages(); subscribeToTyping(); startPresence();
         }
 
         let presenceInterval, presenceUnsub;
         function startPresence() {
             const updateMyPresence = () => { setDoc(doc(db, 'rooms', state.room, 'presence', state.uid), { user: state.user, lastSeen: serverTimestamp() }).catch(()=>{}); };
-            updateMyPresence();
-            presenceInterval = setInterval(updateMyPresence, 30000);
+            updateMyPresence(); presenceInterval = setInterval(updateMyPresence, 30000);
+            
             presenceUnsub = onSnapshot(query(collection(db, 'rooms', state.room, 'presence')), (snapshot) => {
-                let count = 0; snapshot.forEach(doc => { if(doc.data().lastSeen && (Date.now()/1000 - doc.data().lastSeen.seconds) < 65) count++; });
-                els.display.online.innerHTML = `<span class="w-2.5 h-2.5 rounded-full bg-green-500 animate-pulse"></span> ${count} Online`;
+                let users = []; snapshot.forEach(doc => { if(doc.data().lastSeen && (Date.now()/1000 - doc.data().lastSeen.seconds) < 65) users.push(doc.data().user); });
                 
-                els.display.online.onclick = () => {
-                   let users = []; snapshot.forEach(d=> { if(d.data().lastSeen && (Date.now()/1000 - d.data().lastSeen.seconds) < 65) users.push(d.data().user) });
-                   showToast(`Online: ${users.join(', ')}`);
-                };
+                const countHtml = `<span class="w-2 h-2 rounded-full bg-green-500 animate-pulse inline-block mr-1"></span> ${users.length} Online`;
+                els.display.mobile.online.innerHTML = countHtml;
+                els.display.sidebar.onlineCount.textContent = users.length;
+                
+                // Render Sidebar Online List
+                els.display.sidebar.onlineList.innerHTML = '';
+                users.forEach(u => {
+                    const d = document.createElement('div');
+                    d.className = "flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-white/5 cursor-pointer transition";
+                    d.innerHTML = `<img src="${getAvatarUrl(u)}" class="w-6 h-6 rounded-full bg-slate-800"><span class="text-sm font-medium text-slate-300 truncate">${u}</span>`;
+                    d.onclick = () => window.pokeUser(u);
+                    els.display.sidebar.onlineList.appendChild(d);
+                });
             });
         }
 
         let msgUnsub, typingUnsub, timers = {};
         function subscribeToMessages() {
             msgUnsub = onSnapshot(query(collection(db, "messages"), where("room", "==", state.room)), (snapshot) => {
-                els.loading.style.display = 'none';
-                let messages = [];
-                const now = new Date();
-                const textCutoff = now.getTime() - (48 * 3600000);
-                const imgCutoff = now.getTime() - 59000;
+                let messages = []; const now = new Date();
+                const textCutoff = now.getTime() - (48 * 3600000); const imgCutoff = now.getTime() - 59000;
 
                 snapshot.forEach(doc => {
                     const data = doc.data();
@@ -841,95 +893,81 @@
                     messages.push({ id: doc.id, ...data, isPending: doc.metadata.hasPendingWrites });
                 });
 
-                messages.sort((a, b) => {
-                    const tA = a.createdAt ? a.createdAt.seconds : Number.MAX_SAFE_INTEGER;
-                    const tB = b.createdAt ? b.createdAt.seconds : Number.MAX_SAFE_INTEGER;
-                    return tA - tB;
-                });
+                messages.sort((a, b) => { const tA = a.createdAt ? a.createdAt.seconds : Number.MAX_SAFE_INTEGER; const tB = b.createdAt ? b.createdAt.seconds : Number.MAX_SAFE_INTEGER; return tA - tB; });
                 state.chatHistory = messages;
                 renderMessages(messages, snapshot.docChanges());
             });
         }
 
         function renderMessages(messages, changes) {
-            const container = els.display.list; container.innerHTML = '';
-            Object.values(timers).forEach(clearInterval); timers = {};
-
-            if (messages.length === 0) {
-                container.innerHTML = `<div class="flex flex-col items-center justify-center mt-40 opacity-50"><div class="bg-white/10 p-6 rounded-[2rem] mb-4 shadow-xl"><i data-lucide="ghost" class="w-14 h-14 text-[var(--accent-1)]"></i></div><p class="text-lg text-slate-400 fun-font font-medium">So empty... Start bakwaas!</p></div>`;
-                lucide.createIcons(); return;
-            }
-
-            messages.forEach(msg => {
-                const isMe = (msg.uid === state.uid) || (!msg.uid && msg.user === state.user);
-                container.appendChild(createMessageNode(msg, isMe));
-            });
-            if(state.autoScroll) container.scrollTop = container.scrollHeight;
-            lucide.createIcons();
+            const container = els.display.list;
             
-            changes.forEach(change => {
-                if (change.type === "added") {
+            // First load completely replacing innerHTML, else append/update
+            if (container.querySelector('#loading-spinner') || messages.length === 0) {
+                container.innerHTML = ''; Object.values(timers).forEach(clearInterval); timers = {};
+                if (messages.length === 0) { container.innerHTML = `<div class="flex flex-col items-center justify-center mt-40 opacity-50"><div class="bg-white/5 p-6 rounded-[2rem] mb-4 shadow-xl border border-white/10"><i data-lucide="ghost" class="w-16 h-16 text-[var(--accent-1)]"></i></div><p class="text-xl text-slate-400 fun-font font-medium">So empty... Start bakwaas!</p></div>`; lucide.createIcons(); return; }
+                const frag = document.createDocumentFragment();
+                messages.forEach(msg => frag.appendChild(createMessageNode(msg, msg.uid === state.uid)));
+                container.appendChild(frag);
+                if(state.autoScroll) smoothScrollToBottom();
+                lucide.createIcons();
+            } else {
+                // Smart updates for changes
+                changes.forEach(change => {
                     const data = change.doc.data();
-                    if (!data.createdAt || (Date.now() - data.createdAt.seconds * 1000) < 5000) {
-                         // EVENTS & NOTIFICATIONS
-                         if (data.type === 'buzz') triggerShake();
-                         else if(data.type === 'hype') triggerEmojiRain('🎉');
-                         else if(data.type === 'poke' && data.target === state.user) { 
-                             document.body.classList.add('shake-hard'); 
-                             playSound(els.audio.poke);
-                             setTimeout(() => document.body.classList.remove('shake-hard'), 600);
-                             showToast(`You were poked by ${data.user}!`);
-                         }
-                         
-                         // Mention Check
-                         if (data.text && data.text.toLowerCase().includes('@'+state.user.toLowerCase())) {
-                            playSound(els.audio.mention);
-                            showToast(`You were mentioned by ${data.user}`);
-                         }
-                         
-                         else if(data.text) checkForKeywords(data.text);
-                         
-                         if (data.uid !== state.uid && !change.doc.metadata.hasPendingWrites) { playSound(els.audio.receive); }
+                    const isMe = data.uid === state.uid;
+                    if (change.type === "added") {
+                        const existing = document.getElementById(`msg-${change.doc.id}`);
+                        if(!existing) {
+                            container.appendChild(createMessageNode({id: change.doc.id, ...data}, isMe));
+                            if(state.autoScroll) smoothScrollToBottom();
+                            lucide.createIcons();
+                        }
+                        
+                        // Events & Notifications for NEW messages only
+                        if (!data.createdAt || (Date.now() - data.createdAt.seconds * 1000) < 5000) {
+                             if (data.type === 'buzz') triggerShake();
+                             else if(data.type === 'poke' && data.target === state.user) { triggerShake(); playSound(els.audio.poke); showToast(`👉 ${data.user} poked you!`); }
+                             else if(data.type === 'sfx') { if(els.audio[data.sound]) playSound(els.audio[data.sound]); triggerEmojiRain('🎵'); }
+                             else if(data.text && data.text.toLowerCase().includes('@'+state.user.toLowerCase())) { playSound(els.audio.mention); showToast(`Mentioned by ${data.user}`); }
+                             else if(data.text) checkForKeywords(data.text);
+                             
+                             if (!isMe && !change.doc.metadata.hasPendingWrites) playSound(els.audio.receive);
+                        }
                     }
-                }
-            });
+                    if (change.type === "modified") {
+                        const el = document.getElementById(`msg-${change.doc.id}`);
+                        if(el) el.replaceWith(createMessageNode({id: change.doc.id, ...data}, isMe));
+                        lucide.createIcons();
+                    }
+                    if (change.type === "removed") { const el = document.getElementById(`msg-${change.doc.id}`); if(el) el.remove(); }
+                });
+            }
         }
-
-        window.toggleLike = async (id, likes = []) => {
-            const ref = doc(db, "messages", id);
-            if (likes.includes(state.uid)) await updateDoc(ref, { likes: arrayRemove(state.uid) });
-            else await updateDoc(ref, { likes: arrayUnion(state.uid) });
-        };
-
-        window.pokeUser = async (targetName) => {
-            sendMessage({ type: 'poke', target: targetName, text: `👉 Poked ${targetName}` });
-        };
 
         function formatMessage(text) {
             if (!text) return '';
             let t = escapeHtml(text);
             t = t.replace(/(https?:\/\/[^\s]+)/g, '<a href="$1" target="_blank">$1</a>');
-            t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); 
-            t = t.replace(/\*(.*?)\*/g, '<em>$1</em>');
-            t = t.replace(/`(.*?)`/g, '<code>$1</code>');
-            t = t.replace(/~(.*?)~/g, '<del>$1</del>');
+            t = t.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'); t = t.replace(/\*(.*?)\*/g, '<em>$1</em>');
+            t = t.replace(/`(.*?)`/g, '<code>$1</code>'); t = t.replace(/~(.*?)~/g, '<del>$1</del>');
             t = t.replace(/(@\w+)/g, '<span class="mention">$1</span>');
             return t;
         }
 
         function createMessageNode(data, isMe) {
             const div = document.createElement('div');
-            div.className = `flex w-full message-enter mb-4 gap-3 ${isMe ? 'justify-end' : 'justify-start'}`;
+            div.id = `msg-${data.id}`;
+            div.className = `flex w-full message-enter mb-5 gap-3 ${isMe ? 'justify-end' : 'justify-start'}`;
             
             let timeStr, secondsLeft = 59;
             if (data.createdAt) {
                 const date = new Date(data.createdAt.seconds * 1000);
                 timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const age = (new Date().getTime() - date.getTime()) / 1000;
-                secondsLeft = Math.max(0, 59 - Math.floor(age));
+                secondsLeft = Math.max(0, 59 - Math.floor(((new Date().getTime() - date.getTime()) / 1000)));
             } else timeStr = "Sending...";
 
-            // POLL UI
+            // Special Message Types UI
             if (data.type === 'poll') {
                 const totalVotes = data.poll.options.reduce((sum, opt) => sum + opt.votes.length, 0);
                 let optionsHtml = '';
@@ -937,126 +975,79 @@
                     const pct = totalVotes === 0 ? 0 : Math.round((opt.votes.length / totalVotes) * 100);
                     const isVoted = opt.votes.includes(state.uid);
                     optionsHtml += `
-                        <div class="relative mb-2 cursor-pointer" onclick="window.votePoll('${data.id}', ${idx}, '${encodeURIComponent(JSON.stringify(opt.votes))}')">
-                            <div class="flex justify-between text-xs font-bold mb-1 z-10 relative px-1">
-                                <span>${escapeHtml(opt.text)}</span>
-                                <span>${pct}%</span>
-                            </div>
-                            <div class="h-8 bg-black/30 rounded-lg overflow-hidden relative border ${isVoted ? 'border-[var(--accent-1)]' : 'border-white/10'}">
-                                <div class="h-full bg-white/10 poll-bar" style="width: ${pct}%"></div>
-                                <div class="absolute inset-0 flex items-center pl-3">
-                                    ${isVoted ? '<i data-lucide="check" class="w-3 h-3 mr-1 text-[var(--accent-1)]"></i>' : ''}
-                                </div>
+                        <div class="relative mb-2 cursor-pointer group" onclick="window.votePoll('${data.id}', ${idx}, '${encodeURIComponent(JSON.stringify(opt.votes))}')">
+                            <div class="flex justify-between text-xs font-bold mb-1 z-10 relative px-2"><span>${escapeHtml(opt.text)}</span><span>${pct}%</span></div>
+                            <div class="h-9 bg-black/40 rounded-xl overflow-hidden relative border ${isVoted ? 'border-[var(--accent-1)]' : 'border-white/10 group-hover:border-white/30'} transition">
+                                <div class="h-full bg-[var(--accent-1)]/80 poll-bar transition-all duration-500" style="width: ${pct}%"></div>
+                                <div class="absolute inset-0 flex items-center pl-3">${isVoted ? '<i data-lucide="check" class="w-4 h-4 text-white drop-shadow"></i>' : ''}</div>
                             </div>
                         </div>`;
                 });
-                
-                div.className = `flex w-full message-enter mb-4 justify-center`;
-                div.innerHTML = `
-                    <div class="bg-slate-900/90 border border-white/10 p-5 rounded-2xl shadow-xl w-full max-w-sm backdrop-blur-md">
-                        <div class="flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
-                            <i data-lucide="bar-chart-2" class="w-5 h-5 text-[var(--accent-2)]"></i>
-                            <span class="font-bold text-slate-200">${escapeHtml(data.poll.question)}</span>
-                        </div>
-                        <div class="space-y-1">${optionsHtml}</div>
-                        <div class="mt-2 text-[10px] text-right opacity-50 font-mono">${totalVotes} votes • By ${escapeHtml(data.user)}</div>
-                    </div>`;
+                div.className = `flex w-full message-enter mb-6 justify-center`;
+                div.innerHTML = `<div class="bg-slate-900/90 border border-[var(--accent-2)]/30 p-5 rounded-[2rem] shadow-[0_10px_30px_rgba(6,182,212,0.15)] w-full max-w-sm backdrop-blur-xl"><div class="flex items-center gap-2 mb-4 border-b border-white/10 pb-3"><i data-lucide="bar-chart-2" class="w-6 h-6 text-[var(--accent-2)]"></i><span class="font-bold text-slate-100 text-lg leading-tight">${escapeHtml(data.poll.question)}</span></div><div class="space-y-1">${optionsHtml}</div><div class="mt-3 text-[10px] text-right opacity-50 font-mono uppercase tracking-widest">${totalVotes} votes • By ${escapeHtml(data.user)}</div></div>`;
                 return div;
             }
 
-            // --- CARDS (TRUTH / DARE) UI ---
             if (data.type === 'card') {
-                const isTruth = data.cardType === 'truth';
-                const color = isTruth ? 'text-blue-400' : 'text-pink-500';
-                const bg = isTruth ? 'bg-blue-500/20 border-blue-500/30' : 'bg-pink-500/20 border-pink-500/30';
-                const icon = isTruth ? 'message-circle' : 'zap';
-                
-                div.className = `flex w-full message-enter mb-4 justify-center`;
-                div.innerHTML = `
-                    <div class="${bg} border p-6 rounded-2xl shadow-xl w-full max-w-xs backdrop-blur-md relative overflow-hidden group">
-                        <div class="absolute -right-4 -top-4 opacity-10 transform rotate-12 group-hover:rotate-45 transition duration-500">
-                            <i data-lucide="${icon}" class="w-24 h-24 ${color}"></i>
-                        </div>
-                        <p class="text-xs font-bold uppercase tracking-widest ${color} mb-2">${data.cardType.toUpperCase()}</p>
-                        <p class="text-lg font-bold text-white leading-relaxed relative z-10">"${escapeHtml(data.text)}"</p>
-                        <p class="text-[10px] mt-3 opacity-60 font-mono">Challenged by ${escapeHtml(data.user)}</p>
-                    </div>`;
+                const isTruth = data.cardType === 'truth'; const color = isTruth ? 'text-blue-400' : 'text-pink-500'; const bg = isTruth ? 'bg-blue-500/10 border-blue-500/30' : 'bg-pink-500/10 border-pink-500/30'; const icon = isTruth ? 'message-circle-question' : 'flame';
+                div.className = `flex w-full message-enter mb-6 justify-center`;
+                div.innerHTML = `<div class="${bg} border p-6 rounded-[2rem] shadow-2xl w-full max-w-xs backdrop-blur-xl relative overflow-hidden group hover:scale-105 transition duration-300"><div class="absolute -right-6 -top-6 opacity-10 transform rotate-12 group-hover:rotate-45 transition duration-700"><i data-lucide="${icon}" class="w-32 h-32 ${color}"></i></div><p class="text-xs font-black uppercase tracking-widest ${color} mb-3 flex items-center gap-2"><i data-lucide="${icon}" class="w-4 h-4"></i> ${data.cardType}</p><p class="text-xl font-bold text-white leading-snug relative z-10 font-serif italic">"${escapeHtml(data.text)}"</p><p class="text-[10px] mt-4 opacity-50 font-mono uppercase tracking-widest">Challenged by ${escapeHtml(data.user)}</p></div>`;
                 return div;
             }
 
-            // System Messages
-            if (data.type === 'buzz') {
+            if (data.type === 'buzz' || data.type === 'sfx') {
+                const icon = data.type === 'buzz' ? 'zap' : 'music'; const colorClass = data.type === 'buzz' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30';
                 div.className = `flex w-full message-enter mb-4 justify-center`;
-                div.innerHTML = `<div class="bg-yellow-500/10 border border-yellow-500/50 text-yellow-500 px-5 py-2 rounded-full text-sm font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg backdrop-blur-sm"><i data-lucide="zap" class="w-4 h-4"></i> ${escapeHtml(data.user)} BUZZED!</div>`;
+                div.innerHTML = `<div class="${colorClass} border px-6 py-2.5 rounded-full text-xs md:text-sm font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg backdrop-blur-md"><i data-lucide="${icon}" class="w-4 h-4"></i> ${escapeHtml(data.user)}: ${escapeHtml(data.text)}</div>`;
                 return div;
             }
-            if (data.type === 'hype') {
-                div.className = `flex w-full message-enter mb-4 justify-center`;
-                div.innerHTML = `<div class="bg-[var(--accent-2)]/20 border border-[var(--accent-2)]/50 text-[var(--accent-1)] px-5 py-2 rounded-full text-sm font-bold uppercase tracking-widest flex items-center gap-2 shadow-lg backdrop-blur-sm"><i data-lucide="party-popper" class="w-4 h-4"></i> ${escapeHtml(data.user)} HYPED THE CHAT!</div>`;
-                return div;
-            }
-            if (data.type === 'poke') {
-                div.className = `flex w-full message-enter mb-4 justify-center`;
-                div.innerHTML = `<div class="bg-white/10 px-4 py-1.5 rounded-full text-sm text-slate-300 italic shadow-sm">👉 ${escapeHtml(data.text)}</div>`;
-                return div;
-            }
+            if (data.type === 'poke') { div.className = `flex w-full message-enter mb-3 justify-center`; div.innerHTML = `<div class="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs text-slate-400 italic shadow-sm backdrop-blur-sm">👉 ${escapeHtml(data.text)}</div>`; return div; }
 
-            let nameDisplay = data.user;
-            let avatarUrl = `https://api.dicebear.com/9.x/adventurer/svg?seed=${encodeURIComponent(data.user)}`;
-            let isAnon = false;
-
-            if (data.type === 'anon') {
-                isAnon = true;
-                nameDisplay = "Anonymous Ghost";
-                // Ghost avatar or icon
-                avatarUrl = ""; // No dicebear for anon, we use lucide icon
-            }
+            // Standard Message UI
+            let nameDisplay = data.user; let avatarUrl = getAvatarUrl(data.user); let isAnon = data.type === 'anon';
+            if (isAnon) { nameDisplay = "Ghost"; avatarUrl = ""; }
 
             const avatarImg = isAnon 
-                ? `<div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-white/10 shadow-sm flex items-center justify-center flex-shrink-0 self-end mb-1"><i data-lucide="ghost" class="w-5 h-5 text-slate-400"></i></div>`
-                : `<div class="flex flex-col items-center gap-0.5"><img src="${avatarUrl}" alt="${data.user}" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border border-white/10 shadow-sm flex-shrink-0 self-end mb-1 cursor-pointer hover:scale-110 transition" onclick="window.pokeUser('${escapeHtml(data.user)}')"></div>`;
+                ? `<div class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-900 border border-slate-700 shadow-sm flex items-center justify-center flex-shrink-0 self-end mb-1"><i data-lucide="ghost" class="w-4 h-4 text-slate-500"></i></div>`
+                : `<div class="flex flex-col items-center gap-0.5"><img src="${avatarUrl}" class="w-8 h-8 md:w-10 md:h-10 rounded-full bg-slate-800 border-2 border-white/10 shadow-md flex-shrink-0 self-end mb-1 cursor-pointer hover:scale-110 hover:border-[var(--accent-1)] transition duration-300" onclick="window.pokeUser('${escapeHtml(data.user)}')"></div>`;
             
             const likes = data.likes || [];
-            const likeHtml = likes.length > 0 ? `<div class="absolute -bottom-3 ${isMe ? '-left-3' : '-right-3'} bg-slate-900 border border-white/10 rounded-full px-2 py-1 flex items-center gap-1.5 shadow-lg z-10 scale-90"><i data-lucide="heart" class="w-3 h-3 text-[var(--accent-1)] fill-[var(--accent-1)]"></i><span class="text-[10px] text-white font-bold">${likes.length}</span></div>` : '';
+            const likeHtml = likes.length > 0 ? `<div class="absolute -bottom-3 ${isMe ? '-left-2' : '-right-2'} bg-slate-800 border border-white/20 rounded-full px-2 py-0.5 flex items-center gap-1 shadow-xl z-10"><i data-lucide="heart" class="w-3 h-3 text-pink-500 fill-pink-500"></i><span class="text-[10px] text-white font-bold">${likes.length}</span></div>` : '';
 
             let contentHtml = '', bubbleClass = '';
             if (data.image) {
-                const timerId = `timer-${data.id || Math.random()}`;
-                contentHtml = `<div class="relative group/img cursor-pointer"><img src="${data.image}" class="max-w-[200px] md:max-w-[280px] rounded-3xl border border-white/10 shadow-2xl"><div class="absolute bottom-3 right-3 bg-red-600/90 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-xl backdrop-blur-md"><i data-lucide="flame" class="w-3.5 h-3.5 animate-pulse"></i><span id="${timerId}">${secondsLeft}s</span></div></div>`;
-                if (data.createdAt) timers[timerId] = setInterval(() => { const el = document.getElementById(timerId); if (el && parseInt(el.textContent)>0) el.textContent = (parseInt(el.textContent)-1) + 's'; }, 1000);
+                const timerId = `timer-${data.id}`;
+                contentHtml = `<div class="relative group/img cursor-pointer overflow-hidden rounded-[2rem] border border-white/10 shadow-2xl bg-black/50"><img src="${data.image}" class="max-w-[220px] md:max-w-[300px] object-cover opacity-90 group-hover/img:opacity-100 transition duration-300"><div class="absolute bottom-3 right-3 bg-red-600/90 text-white text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-[0_0_15px_rgba(239,68,68,0.6)] backdrop-blur-md fuse-burn"><i data-lucide="flame" class="w-3.5 h-3.5"></i><span id="${timerId}">${secondsLeft}s</span></div></div>`;
+                if (data.createdAt) timers[timerId] = setInterval(() => { const el = document.getElementById(timerId); if (el) { const v = parseInt(el.textContent); if(v>0) el.textContent = (v-1) + 's'; else el.parentElement.innerHTML = '<i data-lucide="flame" class="w-8 h-8 text-red-500 opacity-50 mx-auto my-10"></i>'; } }, 1000);
                 bubbleClass = "bg-transparent p-0 border-none shadow-none";
-            } else if (isEmojiOnly(data.text)) {
-                contentHtml = `<p class="text-6xl md:text-7xl big-emoji-anim leading-normal filter drop-shadow-2xl cursor-pointer select-none hover:scale-110 transition-transform">${escapeHtml(data.text)}</p>`;
+            } else if (!data.text) { return div; } 
+            else if (/^(\p{Emoji_Presentation}|\p{Extended_Pictographic}|\u{1F3FB}-\u{1F3FF})+$/u.test(data.text.trim().replace(/\s/g, '')) && data.text.trim().replace(/\s/g, '').length <= 8) {
+                contentHtml = `<p class="text-6xl md:text-[5rem] big-emoji-anim leading-tight filter drop-shadow-[0_10px_20px_rgba(0,0,0,0.5)] cursor-pointer select-none">${escapeHtml(data.text)}</p>`;
                 bubbleClass = 'bg-transparent shadow-none px-0 py-0 border-none';
             } else {
-                if (isAnon) {
-                    bubbleClass = 'bg-slate-800 text-slate-200 border border-white/10 shadow-lg rounded-3xl rounded-tl-sm';
-                } else {
-                    bubbleClass = isMe ? 'bg-gradient-to-br from-[var(--accent-2)] to-[var(--accent-1)] text-white rounded-3xl rounded-tr-sm shadow-xl border border-white/10' : 'bg-white/10 text-slate-100 rounded-3xl rounded-tl-sm shadow-lg border border-white/5 backdrop-blur-sm';
-                }
-                contentHtml = `<p class="text-lg md:text-xl leading-relaxed whitespace-pre-wrap cursor-pointer select-none font-medium msg-content">${formatMessage(data.text)}</p>`;
+                if (isAnon) { bubbleClass = 'msg-bubble-anon font-mono text-sm'; } 
+                else { bubbleClass = isMe ? 'msg-bubble-me' : 'msg-bubble-them'; }
+                contentHtml = `<p class="text-[15px] md:text-base leading-relaxed whitespace-pre-wrap cursor-pointer select-none msg-content">${formatMessage(data.text)}</p>`;
             }
 
-            const replyHtml = data.replyTo ? `<div class="mb-2 text-xs border-l-4 ${isMe ? 'border-white/40 bg-white/10 text-white' : 'border-[var(--accent-1)] bg-black/20 text-[var(--accent-1)]'} pl-3 py-2 rounded-r-lg"><span class="font-bold opacity-90 uppercase tracking-wide text-[10px] block mb-0.5">${escapeHtml(data.replyTo.user)}</span><p class="truncate opacity-80 font-medium">${escapeHtml(data.replyTo.text)}</p></div>` : '';
+            const replyHtml = data.replyTo ? `<div class="mb-2.5 text-xs border-l-[3px] ${isMe ? 'border-white/50 bg-white/10 text-white' : 'border-[var(--accent-1)] bg-black/30 text-[var(--accent-1)]'} pl-3 pr-2 py-2 rounded-xl rounded-l-sm"><span class="font-black opacity-100 uppercase tracking-widest text-[9px] block mb-0.5 flex items-center gap-1"><i data-lucide="reply" class="w-3 h-3"></i> ${escapeHtml(data.replyTo.user)}</span><p class="truncate opacity-80 font-medium">${escapeHtml(data.replyTo.text)}</p></div>` : '';
             const likesStr = JSON.stringify(likes).replace(/"/g, '&quot;');
-
-            // Anon message label
-            const anonLabel = isAnon ? `<span class="text-[10px] font-bold text-slate-500 mb-1 ml-2 block uppercase tracking-widest"><i data-lucide="ghost" class="w-3 h-3 inline mr-1"></i>Secret Whisper</span>` : '';
+            const anonLabel = isAnon ? `<span class="text-[9px] font-bold text-slate-500 mb-1 ml-2 block uppercase tracking-widest flex items-center gap-1"><i data-lucide="ghost" class="w-3 h-3"></i> Encrypted Whisper</span>` : '';
 
             div.innerHTML = `
                 ${!isMe ? avatarImg : ''}
-                <div class="flex flex-col max-w-[75%] md:max-w-[60%] ${isMe ? 'items-end' : 'items-start'}">
-                    ${!isMe && !isAnon ? `<span class="text-xs text-[var(--accent-2)] mb-1.5 mx-2 font-bold block tracking-wide cursor-pointer hover:underline opacity-90" onclick="window.pokeUser('${escapeHtml(data.user)}')">${escapeHtml(data.user)}</span>` : ''}
+                <div class="flex flex-col max-w-[80%] md:max-w-[65%] ${isMe ? 'items-end' : 'items-start'}">
+                    ${!isMe && !isAnon ? `<span class="text-[11px] text-[var(--accent-2)] mb-1 mx-2 font-black uppercase tracking-widest block cursor-pointer hover:underline opacity-90 drop-shadow-sm" onclick="window.pokeUser('${escapeHtml(data.user)}')">${escapeHtml(data.user)}</span>` : ''}
                     ${anonLabel}
                     <div class="group relative" ondblclick="window.toggleLike('${data.id}', ${likesStr})">
-                        <div class="absolute ${isMe ? '-left-10' : '-right-10'} top-2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 z-10">
-                            ${!data.image ? `<button onclick="window.reply('${data.id}', '${escapeHtml(nameDisplay)}', 'Text')" class="p-2 bg-slate-900/90 rounded-full shadow-xl border border-white/10 text-slate-400 hover:text-[var(--accent-1)] hover:scale-110 transition"><i data-lucide="reply" class="w-4 h-4"></i></button>` : ''}
+                        <div class="absolute ${isMe ? '-left-12' : '-right-12'} top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col gap-2 z-10">
+                            ${!data.image ? `<button onclick="window.reply('${data.id}', '${escapeHtml(nameDisplay)}', '${escapeHtml(data.text||'Image').replace(/'/g,"\\'")}')" class="p-2 bg-slate-800 rounded-full shadow-xl border border-white/10 text-slate-400 hover:text-white hover:bg-[var(--accent-1)] transition transform hover:scale-110"><i data-lucide="reply" class="w-4 h-4"></i></button>` : ''}
                         </div>
-                        <div class="${bubbleClass} px-6 py-3.5 break-words min-w-[80px] relative transition-transform active:scale-[0.98]">
+                        <div class="${bubbleClass} px-4 py-2.5 md:px-5 md:py-3 break-words min-w-[60px] relative transition-transform active:scale-[0.98]">
                             ${replyHtml}${contentHtml}${likeHtml}
                         </div>
                     </div>
-                    <span class="text-[10px] text-slate-400 mt-1.5 mx-2 flex items-center gap-1 font-medium opacity-60">${timeStr}</span>
+                    <span class="text-[9px] text-slate-500 mt-1.5 mx-2 font-bold uppercase tracking-widest opacity-70">${timeStr}</span>
                 </div>
                 ${isMe ? avatarImg : ''}
             `;
@@ -1065,126 +1056,131 @@
 
         async function sendMessage(payloadExtra) {
             const payload = { user: state.user, uid: state.uid, room: state.room, createdAt: serverTimestamp(), likes: [], replyTo: state.reply ? { user: state.reply.user, text: state.reply.text } : null, ...payloadExtra };
-            els.inputs.msg.value = ''; els.inputs.msg.style.height = 'auto'; els.emojiPicker.classList.add('hidden'); closeReply();
+            els.inputs.msg.value = ''; els.inputs.msg.style.height = '48px'; els.emojiPicker.classList.add('hidden'); 
+            state.reply = null; els.reply.box.classList.add('hidden'); els.reply.box.classList.remove('flex');
             
-            if(payloadExtra.type !== 'buzz') playSound(els.audio.send);
-            if(payloadExtra.text) updateChaosScore(5); // 5 Points per message
+            if(payloadExtra.type !== 'buzz' && payloadExtra.type !== 'sfx') playSound(els.audio.send);
+            if(payloadExtra.text && !payloadExtra.type) updateChaosScore(5); 
 
             deleteDoc(doc(db, 'rooms', state.room, 'typing', state.uid)).catch(()=>{});
-            try { await addDoc(collection(db, "messages"), payload); } catch (err) { alert("Failed to send."); }
+            try { await addDoc(collection(db, "messages"), payload); smoothScrollToBottom(); } catch (err) { showToast("Failed to send 😢"); }
             els.inputs.msg.focus();
         }
 
         els.forms.msg.addEventListener('submit', (e) => {
-            e.preventDefault();
-            const text = els.inputs.msg.value.trim();
-            if (!text) return;
+            e.preventDefault(); const text = els.inputs.msg.value.trim(); if (!text) return;
 
-            // --- SLASH COMMANDS (Updated) ---
+            // Slash Commands
+            if (text.startsWith('/nuke')) { triggerNuke(); els.inputs.msg.value = ''; els.inputs.msg.style.height = '48px'; return; }
             if (text.startsWith('/poll ')) {
-                // Format: /poll Question? Opt1, Opt2
-                const raw = text.replace('/poll ', '');
-                const parts = raw.split('?');
-                if(parts.length < 2) { showToast("Format: /poll Question? Opt1, Opt2"); return; }
-                const question = parts[0] + '?';
+                const parts = text.replace('/poll ', '').split('?');
+                if(parts.length < 2) { showToast("Format: /poll Q? Opt1, Opt2"); return; }
                 const options = parts[1].split(',').map(o => ({ text: o.trim(), votes: [] })).filter(o => o.text);
-                if(options.length < 2) { showToast("Need at least 2 options"); return; }
-                
-                sendMessage({ type: 'poll', poll: { question, options } });
-                return;
+                if(options.length < 2) { showToast("Need 2+ options"); return; }
+                sendMessage({ type: 'poll', poll: { question: parts[0] + '?', options } }); return;
             }
-            if (text.startsWith('/shrug')) {
-                sendMessage({ text: `¯\\_(ツ)_/¯` });
-                return;
-            }
-            
-            // Truth or Dare
-            if (text.startsWith('/truth')) {
-                const t = TRUTHS[Math.floor(Math.random() * TRUTHS.length)];
-                sendMessage({ type: 'card', cardType: 'truth', text: t });
-                return;
-            }
-            if (text.startsWith('/dare')) {
-                const d = DARES[Math.floor(Math.random() * DARES.length)];
-                sendMessage({ type: 'card', cardType: 'dare', text: d });
-                return;
-            }
-
-            // Anon Message
-            if (text.startsWith('/anon ')) {
-                const content = text.replace('/anon ', '').trim();
-                if(content) sendMessage({ type: 'anon', text: content });
-                return;
-            }
+            if (text.startsWith('/shrug')) { sendMessage({ text: `¯\\_(ツ)_/¯` }); return; }
+            if (text.startsWith('/truth')) { sendMessage({ type: 'card', cardType: 'truth', text: TRUTHS[Math.floor(Math.random() * TRUTHS.length)] }); return; }
+            if (text.startsWith('/dare')) { sendMessage({ type: 'card', cardType: 'dare', text: DARES[Math.floor(Math.random() * DARES.length)] }); return; }
+            if (text.startsWith('/anon ')) { const c = text.replace('/anon ', '').trim(); if(c) sendMessage({ type: 'anon', text: c }); return; }
 
             sendMessage({ text });
         });
 
+        // Typing indicator logic
+        let typingTimeout;
         els.inputs.msg.addEventListener('input', () => {
-            els.inputs.msg.style.height = 'auto'; els.inputs.msg.style.height = els.inputs.msg.scrollHeight + 'px';
-            if (Date.now() - state.lastTyping > 2000) { state.lastTyping = Date.now(); setDoc(doc(db, 'rooms', state.room, 'typing', state.uid), { user: state.user, timestamp: serverTimestamp() }).catch(()=>{}); }
+            els.inputs.msg.style.height = '48px'; // Reset to calculate exact scroll height
+            els.inputs.msg.style.height = Math.min(els.inputs.msg.scrollHeight, 120) + 'px';
+            if (Date.now() - state.lastTyping > 2000) { 
+                state.lastTyping = Date.now(); 
+                setDoc(doc(db, 'rooms', state.room, 'typing', state.uid), { user: state.user, timestamp: serverTimestamp() }).catch(()=>{}); 
+            }
+            clearTimeout(typingTimeout);
+            typingTimeout = setTimeout(() => { deleteDoc(doc(db, 'rooms', state.room, 'typing', state.uid)).catch(()=>{}); }, 3000);
         });
 
         function subscribeToTyping() {
             typingUnsub = onSnapshot(query(collection(db, 'rooms', state.room, 'typing')), (snapshot) => {
                 const active = []; snapshot.forEach(d => { if(d.id!==state.uid && d.data().timestamp && (Date.now()/1000 - d.data().timestamp.seconds)<4) active.push(d.data().user); });
-                if(active.length>0) { els.typing.box.classList.remove('hidden'); setTimeout(()=>els.typing.box.classList.remove('opacity-0', 'translate-y-2'),10); els.typing.text.textContent=active.length>2?"Several typing...":`${active.join(', ')} typing...`; }
-                else { els.typing.box.classList.add('opacity-0', 'translate-y-2'); setTimeout(()=>els.typing.box.classList.add('hidden'),300); }
+                if(active.length>0) { els.typing.box.classList.remove('hidden'); setTimeout(()=>els.typing.box.classList.remove('opacity-0', 'translate-y-4'),10); els.typing.text.textContent=active.length>2?"Several typing...":`${active.join(', ')} typing...`; }
+                else { els.typing.box.classList.add('opacity-0', 'translate-y-4'); setTimeout(()=>els.typing.box.classList.add('hidden'),300); }
             });
         }
 
-        function isEmojiOnly(text) { if (!text) return false; const regex = /^(\p{Emoji_Presentation}|\p{Extended_Pictographic}|\u{1F3FB}-\u{1F3FF})+$/u; const c = text.trim().replace(/\s/g, ''); return c.length > 0 && c.length <= 12 && regex.test(c); }
-        window.reply = (id, user, text) => { state.reply = { id, user, text }; els.reply.user.textContent = user; els.reply.text.textContent = text; els.reply.box.classList.remove('hidden'); els.reply.box.classList.add('flex'); els.inputs.msg.focus(); };
-        els.reply.cancel.addEventListener('click', closeReply); function closeReply() { state.reply = null; els.reply.box.classList.add('hidden'); els.reply.box.classList.remove('flex'); }
-        els.btns.logout.addEventListener('click', () => { renderFavorites(); els.screens.chat.classList.add('hidden'); els.screens.chat.classList.remove('flex'); els.screens.login.classList.remove('hidden'); if(msgUnsub) msgUnsub(); if(typingUnsub) typingUnsub(); if(presenceInterval) clearInterval(presenceInterval); if(presenceUnsub) presenceUnsub(); });
+        const leaveRoom = () => { renderSidebarFavs(); renderHomeFavs(); els.screens.chat.classList.add('hidden'); els.screens.chat.classList.remove('md:flex'); els.screens.login.classList.remove('hidden'); if(msgUnsub) msgUnsub(); if(typingUnsub) typingUnsub(); if(presenceInterval) clearInterval(presenceInterval); if(presenceUnsub) presenceUnsub(); };
+        els.btns.mobileBack.addEventListener('click', leaveRoom); els.btns.sidebarLogout.addEventListener('click', leaveRoom);
+        els.reply.cancel.addEventListener('click', () => { state.reply = null; els.reply.box.classList.add('hidden'); els.reply.box.classList.remove('flex'); });
         function escapeHtml(t) { if (!t) return ''; const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 
-        // --- AI JUDGE ---
-        function extractJSON(str) {
-            const match = str.match(/\{[\s\S]*\}/);
-            return match ? JSON.parse(match[0]) : null;
-        }
+        // --- DEEPSEEK AI AURA JUDGE INTEGRATION ---
+        async function openJudgeModal() {
+            els.menu.classList.add('hidden');
+            if (state.chatHistory.length < 5) { showToast("AI needs more chaos (5+ msgs) to judge!"); return; }
+            openModal(els.modal);
+            els.modal.content.innerHTML = `<div class="text-center py-12"><div class="relative w-16 h-16 mx-auto mb-6"><div class="absolute inset-0 border-4 border-[var(--accent-1)]/30 rounded-full"></div><div class="absolute inset-0 border-4 border-[var(--accent-1)] rounded-full border-t-transparent animate-spin"></div><i data-lucide="brain" class="absolute inset-0 m-auto w-6 h-6 text-[var(--accent-2)] animate-pulse"></i></div><p class="text-lg font-bold text-white tracking-widest uppercase">DeepSeek is Analyzing...</p><p class="text-xs text-slate-400 mt-2">Connecting to OpenRouter Neural Net</p></div>`; lucide.createIcons();
 
-        els.btns.judge.addEventListener('click', async () => {
-            if (state.chatHistory.length < 3) { showToast("Need more chats!"); return; }
-            els.modal.box.classList.remove('hidden'); setTimeout(()=>els.modal.box.classList.remove('opacity-0'),10);
-            els.modal.content.innerHTML = `<div class="text-center py-10"><i data-lucide="loader-2" class="w-12 h-12 mx-auto animate-spin text-[var(--accent-1)]"></i><p class="mt-4 text-base font-medium text-slate-300">Summoning AI Judge...</p></div>`; lucide.createIcons();
-
-            const recent = state.chatHistory.slice(-40).map(m => `${m.user}: ${m.text || '[Image]'}`).join('\n');
-            const prompt = `Act as a savage, funny judge. Analyze this chat log. Pick a winner who had the best vibes/logic and a loser who got roasted or was boring. Provide DETAILED, funny explanations (2 sentences minimum). Output RAW JSON ONLY: { "winner": "Name", "winner_reason": "Detailed explanation...", "loser": "Name", "loser_reason": "Detailed roast...", "summary": "Overall vibe check..." } \n\nChat Log:\n${recent}`;
+            const recent = state.chatHistory.slice(-50).map(m => `${m.user}: ${m.text || '[Action/Image]'}`).join('\n');
+            const prompt = `Act as an extremely savage, chaotic Gen-Z AI judge. Read the following chat room log. Pick ONE winner (best vibes, funniest, or most logical) and ONE loser (most cringe, boring, or got roasted). Output pure JSON only with this exact structure: {"winner": "Name", "winner_reason": "2 short sentences praising them", "loser": "Name", "loser_reason": "2 short sentences roasting them", "summary": "1 short savage summary of the whole chat"}\n\nChat Log:\n${recent}`;
 
             try {
-                const res = await fetch(AI_URL, { method: "POST", headers: { "Authorization": `Bearer ${AI_KEY}`, "Content-Type": "application/json", "HTTP-Referer": window.location.href, "X-Title": "Faltu" }, body: JSON.stringify({ "model": "google/gemini-2.0-flash-exp:free", "messages": [{"role": "user", "content": prompt}] }) });
+                // If API key is untouched, simulate locally for demonstration.
+                if (DEEPSEEK_API_KEY === "YOUR_OPENROUTER_API_KEY_HERE") { throw new Error("API Key not set"); }
+
+                const res = await fetch(AI_URL, { 
+                    method: "POST", 
+                    headers: { "Authorization": `Bearer ${DEEPSEEK_API_KEY}`, "Content-Type": "application/json", "HTTP-Referer": window.location.href, "X-Title": "Faltu Chaos" }, 
+                    body: JSON.stringify({ "model": AI_MODEL, "messages": [{"role": "user", "content": prompt}] }) 
+                });
                 if(!res.ok) throw new Error();
                 const data = await res.json();
-                const json = extractJSON(data.choices[0].message.content);
-                if (json) renderReport(json); else throw new Error("Invalid JSON");
+                
+                // Extract JSON from markdown if DeepSeek wraps it
+                let content = data.choices[0].message.content;
+                const match = content.match(/\{[\s\S]*\}/);
+                const json = match ? JSON.parse(match[0]) : JSON.parse(content);
+                renderReport(json);
             } catch(e) {
-                console.error("AI Fail", e);
+                console.warn("AI Fallback active (No key or error)", e);
+                // Fallback deterministic random roast
                 const users = [...new Set(state.chatHistory.map(m=>m.user))];
-                renderReport({ 
-                    winner: users[Math.floor(Math.random()*users.length)]||"Nobody", 
-                    winner_reason: "Vibes were immaculate (AI Offline Backup).", 
-                    loser: users[Math.floor(Math.random()*users.length)]||"You", 
-                    loser_reason: "Caught in 4K lacking (AI Offline Backup).", 
-                    summary: "The AI servers are overloaded, but the chaos continues locally." 
-                });
+                const w = users[Math.floor(Math.random()*users.length)] || "Nobody";
+                const l = users.find(u => u !== w) || state.user;
+                setTimeout(() => {
+                    renderReport({ 
+                        winner: w, winner_reason: "Carried the entire room's vibe on their back. Absolute legend.", 
+                        loser: l, loser_reason: "Typing with the energy of a dead battery. Needs a factory reset.", 
+                        summary: "DeepSeek API key missing, but you all still need therapy." 
+                    });
+                }, 1500);
             }
-        });
+        }
 
         function renderReport(data) {
             els.modal.content.innerHTML = `
-                <div class="space-y-6 animate-fade-in-up">
-                    <div class="bg-yellow-500/10 border border-yellow-500/30 p-6 rounded-[2rem] flex items-center gap-5 shadow-lg"><div class="bg-yellow-500/20 p-4 rounded-2xl"><i data-lucide="trophy" class="w-8 h-8 text-yellow-400"></i></div><div><h3 class="text-yellow-400 font-black text-2xl mb-1">Winner: ${data.winner}</h3><p class="text-sm font-medium text-yellow-100/80 leading-relaxed">${data.winner_reason}</p></div></div>
-                    <div class="bg-red-500/10 border border-red-500/30 p-6 rounded-[2rem] flex items-center gap-5 shadow-lg"><div class="bg-red-500/20 p-4 rounded-2xl"><i data-lucide="thumbs-down" class="w-8 h-8 text-red-400"></i></div><div><h3 class="text-red-400 font-black text-2xl mb-1">Loser: ${data.loser}</h3><p class="text-sm font-medium text-red-100/80 leading-relaxed">${data.loser_reason}</p></div></div>
-                    <p class="text-center text-base italic text-slate-400 px-4">"${data.summary}"</p>
+                <div class="space-y-5 animate-fade-in-up">
+                    <div class="bg-gradient-to-r from-yellow-500/20 to-transparent border border-yellow-500/30 p-5 rounded-3xl flex items-start md:items-center gap-4 shadow-lg relative overflow-hidden">
+                        <div class="absolute right-0 top-0 opacity-10"><i data-lucide="trophy" class="w-24 h-24 text-yellow-500"></i></div>
+                        <div class="bg-yellow-500/20 p-3 rounded-2xl flex-shrink-0 relative z-10"><i data-lucide="crown" class="w-6 h-6 md:w-8 md:h-8 text-yellow-400"></i></div>
+                        <div class="relative z-10">
+                            <h3 class="text-yellow-400 font-black text-xl md:text-2xl mb-1 flex items-center gap-2">W: ${escapeHtml(data.winner)}</h3>
+                            <p class="text-xs md:text-sm font-medium text-yellow-100/90 leading-relaxed">${escapeHtml(data.winner_reason)}</p>
+                        </div>
+                    </div>
+                    <div class="bg-gradient-to-r from-red-500/20 to-transparent border border-red-500/30 p-5 rounded-3xl flex items-start md:items-center gap-4 shadow-lg relative overflow-hidden">
+                        <div class="absolute right-0 top-0 opacity-10"><i data-lucide="skull" class="w-24 h-24 text-red-500"></i></div>
+                        <div class="bg-red-500/20 p-3 rounded-2xl flex-shrink-0 relative z-10"><i data-lucide="thumbs-down" class="w-6 h-6 md:w-8 md:h-8 text-red-400"></i></div>
+                        <div class="relative z-10">
+                            <h3 class="text-red-400 font-black text-xl md:text-2xl mb-1 flex items-center gap-2">L: ${escapeHtml(data.loser)}</h3>
+                            <p class="text-xs md:text-sm font-medium text-red-100/90 leading-relaxed">${escapeHtml(data.loser_reason)}</p>
+                        </div>
+                    </div>
+                    <div class="pt-4 border-t border-white/10 text-center">
+                        <p class="text-sm md:text-base font-bold italic text-purple-300 px-2 drop-shadow-md">"${escapeHtml(data.summary)}"</p>
+                    </div>
                 </div>`;
             lucide.createIcons();
         }
-        els.modal.close.addEventListener('click', (e) => { e.stopPropagation(); closeModal(); });
-        els.modal.box.addEventListener('click', (e) => { if(e.target===els.modal.box) closeModal(); });
-        function closeModal() { els.modal.box.classList.add('opacity-0'); setTimeout(()=>els.modal.box.classList.add('hidden'),300); }
     </script>
 </body>
 </html>
-
